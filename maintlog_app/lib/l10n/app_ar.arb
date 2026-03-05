@@ -1,0 +1,17 @@
+{
+  "@@locale": "ar",
+  "appTitle": "مينت لوج برو",
+  "logbook": "السجل",
+  "dashboard": "لوحة القيادة",
+  "checklist": "قائمة التحقق",
+  "reports": "التقارير",
+  "aiAssistant": "المساعد الذكي",
+  "settings": "الإعدادات",
+  "newEntry": "إدخال جديد",
+  "editEntry": "تعديل الإدخال",
+  "save": "حفظ",
+  "cancel": "إلغاء",
+  "language": "اللغة",
+  "english": "الإنجليزية",
+  "arabic": "العربية"
+}

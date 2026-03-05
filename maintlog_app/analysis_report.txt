@@ -1,0 +1,10 @@
+﻿Analyzing maintlog_app...                                       
+
+warning - The value of the local variable 'res' isn't used - lib\create_admin.dart:14:11 - unused_local_variable
+warning - The value of the local variable 'res' isn't used - lib\create_admin_pure.dart:11:11 - unused_local_variable
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:248:31 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:178:23 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:179:23 - prefer_interpolation_to_compose_strings
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\widgets\new_log_entry_dialog.dart:282:29 - deprecated_member_use
+warning - The value of the local variable 'res' isn't used - test\admin_setup_test.dart:14:13 - unused_local_variable
+

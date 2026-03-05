@@ -1,0 +1,375 @@
+import 'package:flutter/material.dart';
+import 'package:uuid/uuid.dart';
+import '../models/log_entry.dart';
+import '../database/local_database.dart';
+
+class NewLogEntryDialog extends StatefulWidget {
+  final String activeShift;
+  final String activeCrew;
+  final LogEntry? initialEntry;
+  final bool isDuplicate;
+  const NewLogEntryDialog({
+    super.key,
+    required this.activeShift,
+    required this.activeCrew,
+    this.initialEntry,
+    this.isDuplicate = false,
+  });
+
+  @override
+  State<NewLogEntryDialog> createState() => _NewLogEntryDialogState();
+}
+
+class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  String? _selectedMachine;
+  List<String> _machines = [];
+
+  final List<String> _availableLines = ['Line 1', 'Line 2', 'Line 3', 'Line 4'];
+  final List<String> _selectedLines = [];
+
+  List<String> _availableEngineers = [];
+  final List<String> _selectedEngineers = [];
+
+  final TextEditingController _workDescController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _notesController = TextEditingController();
+
+  List<Map<String, dynamic>> _availableParts = [];
+  Map<String, dynamic>? _selectedPart;
+  String? _selectedPartId;
+  final TextEditingController _partQuantityController = TextEditingController(
+    text: '1',
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    if (widget.initialEntry != null) {
+      _selectedMachine = widget.initialEntry!.machineId;
+      if (widget.initialEntry!.lineId != null) {
+        _selectedLines.addAll(
+          widget.initialEntry!.lineId!.split(', ').where((s) => s.isNotEmpty),
+        );
+      }
+      if (widget.initialEntry!.engineers != null) {
+        _selectedEngineers.addAll(
+          widget.initialEntry!.engineers!
+              .split(', ')
+              .where((s) => s.isNotEmpty),
+        );
+      }
+      _workDescController.text = widget.initialEntry!.workDescription;
+      _timeController.text = widget.initialEntry!.totalTime.toString();
+      _notesController.text = widget.initialEntry!.notes ?? '';
+    }
+  }
+
+  void _loadData() async {
+    final parts = await LocalDatabase.instance.getSpareParts();
+    final machinesData = await LocalDatabase.instance.getMachines();
+    final engineersData = await LocalDatabase.instance.getEngineers();
+
+    final activeCrewList = widget.activeCrew == 'No crew assigned'
+        ? <String>[]
+        : widget.activeCrew.split(', ').map((e) => e.trim()).toList();
+
+    setState(() {
+      _availableParts = parts;
+      _machines = machinesData.map((e) => e['name'] as String).toList();
+      _availableEngineers = engineersData
+          .map((e) => e['full_name'] as String)
+          .where(
+            (name) => activeCrewList.contains(name),
+          ) // Only show assigned shift crew
+          .toList();
+
+      // Ensure any already selected engineers (e.g. from an old entry) are still visible
+      for (var selected in _selectedEngineers) {
+        if (!_availableEngineers.contains(selected)) {
+          _availableEngineers.add(selected);
+        }
+      }
+    });
+  }
+
+  int _parseTime(String input) {
+    if (input.isEmpty) return 0;
+
+    // Check if it's a simple number
+    if (int.tryParse(input) != null) {
+      return int.parse(input);
+    }
+
+    // Try parsing intervals like "09:00-10:30 + 12:00-12:45"
+    int totalMinutes = 0;
+    try {
+      final parts = input.split('+');
+      for (var p in parts) {
+        final times = p.trim().split('-');
+        if (times.length == 2) {
+          final start = times[0].trim().split(':');
+          final end = times[1].trim().split(':');
+
+          final startMinutes = int.parse(start[0]) * 60 + int.parse(start[1]);
+          final endMinutes = int.parse(end[0]) * 60 + int.parse(end[1]);
+
+          totalMinutes += (endMinutes - startMinutes);
+        }
+      }
+      return totalMinutes > 0 ? totalMinutes : 0;
+    } catch (e) {
+      return 0; // Fallback
+    }
+  }
+
+  void _submit() async {
+    if (_formKey.currentState!.validate()) {
+      if (_selectedLines.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select at least one line')),
+        );
+        return;
+      }
+      if (_selectedEngineers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please assign at least one engineer')),
+        );
+        return;
+      }
+
+      final parsedTime = _parseTime(_timeController.text);
+
+      String? partsUsedString;
+      if (_selectedPart != null) {
+        final int qty = int.tryParse(_partQuantityController.text) ?? 1;
+        partsUsedString =
+            _selectedPart!['name'].toString() +
+            " (Qty: " +
+            qty.toString() +
+            ")";
+      }
+
+      final entry = LogEntry(
+        id: (widget.initialEntry != null && !widget.isDuplicate)
+            ? widget.initialEntry!.id
+            : const Uuid().v4(),
+        sectionId: widget.initialEntry?.sectionId ?? 'sec-1',
+        machineId: _selectedMachine ?? 'Unknown',
+        date:
+            widget.initialEntry?.date ??
+            DateTime.now().toIso8601String().split('T')[0],
+        shift: widget.initialEntry?.shift ?? widget.activeShift,
+        workDescription: _workDescController.text,
+        totalTime: parsedTime,
+        lineId: _selectedLines.join(', '),
+        engineers: _selectedEngineers.join(', '),
+        partsUsed: partsUsedString,
+        notes: _notesController.text.isNotEmpty ? _notesController.text : null,
+        createdAt: widget.initialEntry?.createdAt ?? DateTime.now(),
+        updatedAt: DateTime.now(),
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(entry);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 800),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.initialEntry == null || widget.isDuplicate
+                    ? 'New Log Entry (Duplicate) - ' + widget.activeShift
+                    : 'Edit Log Entry - ' + widget.initialEntry!.shift,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView(
+                  children: [
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Machine',
+                        border: OutlineInputBorder(),
+                      ),
+                      initialValue: _selectedMachine,
+                      items: _machines
+                          .map(
+                            (m) => DropdownMenuItem(value: m, child: Text(m)),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setState(() => _selectedMachine = val),
+                      validator: (val) =>
+                          val == null ? 'Please select a machine' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Lines (Multi-select)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: _availableLines.map((line) {
+                        final isSelected = _selectedLines.contains(line);
+                        return FilterChip(
+                          label: Text(line),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedLines.add(line);
+                              } else {
+                                _selectedLines.remove(line);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Assigned Engineers (Multi-select)',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      children: _availableEngineers.map((eng) {
+                        final isSelected = _selectedEngineers.contains(eng);
+                        return FilterChip(
+                          label: Text(eng),
+                          selected: isSelected,
+                          onSelected: (selected) {
+                            setState(() {
+                              if (selected) {
+                                _selectedEngineers.add(eng);
+                              } else {
+                                _selectedEngineers.remove(eng);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _workDescController,
+                      decoration: const InputDecoration(
+                        labelText: 'Work Description',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                      validator: (val) =>
+                          val == null || val.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _timeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Total Time (mins or intervals)',
+                        hintText: 'e.g. 45 or 09:00-10:30 + 11:00-11:15',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (val) =>
+                          val == null || val.isEmpty ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 2,
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Spare Part Used',
+                              border: OutlineInputBorder(),
+                            ),
+                            isExpanded: true,
+                            initialValue: _selectedPartId,
+                            items: _availableParts.map((p) {
+                              final isLow = (p['stock'] as int) < 3;
+                              final isOut = (p['stock'] as int) == 0;
+                              return DropdownMenuItem<String>(
+                                value: p['id'] as String,
+                                child: Text(
+                                  p['name'].toString() +
+                                      " (Stock: " +
+                                      p['stock'].toString() +
+                                      ")",
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: isOut
+                                        ? Colors.grey
+                                        : (isLow ? Colors.orange : null),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              setState(() {
+                                _selectedPartId = val;
+                                _selectedPart = _availableParts.firstWhere(
+                                  (p) => p['id'] == val,
+                                );
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          flex: 1,
+                          child: TextFormField(
+                            controller: _partQuantityController,
+                            keyboardType: TextInputType.number,
+                            decoration: const InputDecoration(
+                              labelText: 'Qty',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Notes (Optional)',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  const SizedBox(width: 16),
+                  ElevatedButton(
+                    onPressed: _submit,
+                    child: const Text('Save Entry'),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

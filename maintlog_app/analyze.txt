@@ -1,0 +1,13 @@
+﻿Analyzing maintlog_app...                                       
+
+   info - Don't invoke 'print' in production code - lib\create_admin.dart:17:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\create_admin.dart:19:5 - avoid_print
+   info - The imported package 'supabase' isn't a dependency of the importing package - lib\create_admin_pure.dart:1:8 - depend_on_referenced_packages
+   info - Don't invoke 'print' in production code - lib\create_admin_pure.dart:14:5 - avoid_print
+   info - Don't invoke 'print' in production code - lib\create_admin_pure.dart:16:5 - avoid_print
+warning - Unused import: '../widgets/new_log_entry_dialog.dart' - lib\screens\logbook_screen.dart:7:8 - unused_import
+   info - Don't invoke 'print' in production code - lib\services\sync_service.dart:34:9 - avoid_print
+   info - Don't invoke 'print' in production code - lib\services\sync_service.dart:55:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\admin_setup_test.dart:17:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\admin_setup_test.dart:19:7 - avoid_print
+

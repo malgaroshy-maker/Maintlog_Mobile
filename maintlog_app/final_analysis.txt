@@ -1,0 +1,9 @@
+﻿Analyzing maintlog_app...                                       
+
+   info - Use interpolation to compose strings and values - lib\create_admin.dart:18:11 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\create_admin_pure.dart:15:11 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:248:31 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:178:23 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:179:23 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - test\admin_setup_test.dart:18:13 - prefer_interpolation_to_compose_strings
+

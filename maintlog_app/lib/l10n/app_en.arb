@@ -1,0 +1,20 @@
+{
+  "@@locale": "en",
+  "appTitle": "MaintLog Pro",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  "logbook": "Logbook",
+  "dashboard": "Dashboard",
+  "checklist": "Checklist",
+  "reports": "Reports",
+  "aiAssistant": "AI Assistant",
+  "settings": "Settings",
+  "newEntry": "New Entry",
+  "editEntry": "Edit Entry",
+  "save": "Save",
+  "cancel": "Cancel",
+  "language": "Language",
+  "english": "English",
+  "arabic": "Arabic"
+}
