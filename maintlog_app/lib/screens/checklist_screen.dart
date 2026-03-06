@@ -163,6 +163,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                     if (ctx.mounted) Navigator.pop(ctx);
                     _loadTasks();
                     SyncService().syncAll();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Task added successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
                   },
                   child: const Text('Add'),
                 ),
@@ -262,6 +270,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                     if (ctx.mounted) Navigator.pop(ctx);
                     _loadTasks();
                     SyncService().syncAll();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Task updated successfully'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    }
                   },
                   child: const Text('Save'),
                 ),
@@ -328,171 +344,189 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _tasks.isEmpty
-          ? const Center(child: Text('No tasks yet. Tap + to add one!'))
-          : ListView.builder(
-              itemCount: _tasks.length,
-              itemBuilder: (context, index) {
-                final task = _tasks[index];
-                final isDone = task['status'] == 'done';
-                final pColor = _priorityColor(task['priority'] ?? 'Medium');
-
-                final isCreator = _isCreator(task);
-
-                return Card(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
-                  ),
-                  child: ListTile(
-                    leading: Checkbox(
-                      value: isDone,
-                      onChanged: (val) async {
-                        final userIds = _getCurrentUserIdentifiers();
-                        final newStatus = val == true ? 'done' : 'pending';
-
-                        // --- Permission: checking (completing) ---
-                        if (newStatus == 'done') {
-                          final assignedTo = (task['assigned_to'] ?? '')
-                              .toString();
-                          if (assignedTo.isNotEmpty &&
-                              !userIds.contains(assignedTo)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Only $assignedTo can complete this task.',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                        }
-
-                        // --- Permission: unchecking ---
-                        if (newStatus == 'pending' && isDone) {
-                          final completedBy = (task['completed_by'] ?? '')
-                              .toString();
-                          final createdBy = (task['created_by'] ?? '')
-                              .toString();
-                          final canUncheck =
-                              userIds.contains(completedBy) ||
-                              userIds.contains(createdBy);
-                          if (!canUncheck) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                  'Only the person who completed or created this task can uncheck it.',
-                                ),
-                              ),
-                            );
-                            return;
-                          }
-                        }
-
-                        String? completedBy;
-                        String? completedAt;
-                        if (newStatus == 'done') {
-                          final user =
-                              Supabase.instance.client.auth.currentUser;
-                          completedBy =
-                              user?.userMetadata?['full_name'] ??
-                              user?.email ??
-                              'Unknown User';
-                          completedAt = DateTime.now().toIso8601String();
-                        }
-
-                        await LocalDatabase.instance.updateTaskStatus(
-                          task['id'],
-                          newStatus,
-                          completedBy: completedBy,
-                          completedAt: completedAt,
-                        );
-                        _loadTasks();
-                        SyncService().syncAll();
-                      },
+      body: RefreshIndicator(
+        onRefresh: _manualSync,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _tasks.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.checklist, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No tasks yet. Tap + to add one!',
+                      style: TextStyle(color: Colors.grey[600], fontSize: 16),
                     ),
-                    title: Text(
-                      task['description'] ?? '',
-                      style: TextStyle(
-                        decoration: isDone ? TextDecoration.lineThrough : null,
-                        color: isDone ? Colors.grey : null,
+                  ],
+                ),
+              )
+            : ListView.builder(
+                itemCount: _tasks.length,
+                itemBuilder: (context, index) {
+                  final task = _tasks[index];
+                  final isDone = task['status'] == 'done';
+                  final pColor = _priorityColor(task['priority'] ?? 'Medium');
+
+                  final isCreator = _isCreator(task);
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    child: ListTile(
+                      leading: Checkbox(
+                        value: isDone,
+                        onChanged: (val) async {
+                          final userIds = _getCurrentUserIdentifiers();
+                          final newStatus = val == true ? 'done' : 'pending';
+
+                          // --- Permission: checking (completing) ---
+                          if (newStatus == 'done') {
+                            final assignedTo = (task['assigned_to'] ?? '')
+                                .toString();
+                            if (assignedTo.isNotEmpty &&
+                                !userIds.contains(assignedTo)) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Only $assignedTo can complete this task.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          // --- Permission: unchecking ---
+                          if (newStatus == 'pending' && isDone) {
+                            final completedBy = (task['completed_by'] ?? '')
+                                .toString();
+                            final createdBy = (task['created_by'] ?? '')
+                                .toString();
+                            final canUncheck =
+                                userIds.contains(completedBy) ||
+                                userIds.contains(createdBy);
+                            if (!canUncheck) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Only the person who completed or created this task can uncheck it.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
+                          }
+
+                          String? completedBy;
+                          String? completedAt;
+                          if (newStatus == 'done') {
+                            final user =
+                                Supabase.instance.client.auth.currentUser;
+                            completedBy =
+                                user?.userMetadata?['full_name'] ??
+                                user?.email ??
+                                'Unknown User';
+                            completedAt = DateTime.now().toIso8601String();
+                          }
+
+                          await LocalDatabase.instance.updateTaskStatus(
+                            task['id'],
+                            newStatus,
+                            completedBy: completedBy,
+                            completedAt: completedAt,
+                          );
+                          _loadTasks();
+                          SyncService().syncAll();
+                        },
+                      ),
+                      title: Text(
+                        task['description'] ?? '',
+                        style: TextStyle(
+                          decoration: isDone
+                              ? TextDecoration.lineThrough
+                              : null,
+                          color: isDone ? Colors.grey : null,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Created by: ' + (task['created_by'] ?? 'Unknown'),
+                          ),
+                          if (task['assigned_to'] != null &&
+                              task['assigned_to'].toString().isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                'Assigned to: ' +
+                                    task['assigned_to'].toString(),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          if (isDone && task['completed_by'] != null)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                'Completed by: ' +
+                                    task['completed_by'].toString(),
+                                style: const TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Chip(
+                            label: Text(
+                              task['priority'] ?? 'Medium',
+                              style: const TextStyle(fontSize: 11),
+                            ),
+                            backgroundColor: pColor.withValues(alpha: 0.2),
+                            side: BorderSide(color: pColor),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                          ),
+                          if (isCreator) ...[
+                            const SizedBox(width: 4),
+                            IconButton(
+                              icon: const Icon(Icons.edit, size: 18),
+                              tooltip: 'Edit',
+                              onPressed: () => _editTaskDialog(task),
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(4),
+                            ),
+                            IconButton(
+                              icon: const Icon(
+                                Icons.delete,
+                                size: 18,
+                                color: Colors.redAccent,
+                              ),
+                              tooltip: 'Delete',
+                              onPressed: () => _deleteTask(task),
+                              constraints: const BoxConstraints(),
+                              padding: const EdgeInsets.all(4),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Created by: ' + (task['created_by'] ?? 'Unknown'),
-                        ),
-                        if (task['assigned_to'] != null &&
-                            task['assigned_to'].toString().isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(
-                              'Assigned to: ' + task['assigned_to'].toString(),
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        if (isDone && task['completed_by'] != null)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2.0),
-                            child: Text(
-                              'Completed by: ' +
-                                  task['completed_by'].toString(),
-                              style: const TextStyle(
-                                color: Colors.green,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Chip(
-                          label: Text(
-                            task['priority'] ?? 'Medium',
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          backgroundColor: pColor.withValues(alpha: 0.2),
-                          side: BorderSide(color: pColor),
-                          visualDensity: VisualDensity.compact,
-                          padding: EdgeInsets.zero,
-                        ),
-                        if (isCreator) ...[
-                          const SizedBox(width: 4),
-                          IconButton(
-                            icon: const Icon(Icons.edit, size: 18),
-                            tooltip: 'Edit',
-                            onPressed: () => _editTaskDialog(task),
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(4),
-                          ),
-                          IconButton(
-                            icon: const Icon(
-                              Icons.delete,
-                              size: 18,
-                              color: Colors.redAccent,
-                            ),
-                            tooltip: 'Delete',
-                            onPressed: () => _deleteTask(task),
-                            constraints: const BoxConstraints(),
-                            padding: const EdgeInsets.all(4),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddTaskDialog,
         child: const Icon(Icons.add_task),

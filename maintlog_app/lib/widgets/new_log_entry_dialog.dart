@@ -32,7 +32,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
   String? _selectedMachine;
   List<String> _machines = [];
 
-  final List<String> _availableLines = ['Line 1', 'Line 2', 'Line 3', 'Line 4'];
+  List<String> _availableLines = [];
   final List<String> _selectedLines = [];
 
   List<String> _availableEngineers = [];
@@ -76,6 +76,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
     final parts = await LocalDatabase.instance.getSpareParts();
     final machinesData = await LocalDatabase.instance.getMachines();
     final engineersData = await LocalDatabase.instance.getEngineers();
+    final linesData = await LocalDatabase.instance.getLines();
 
     final activeCrewList = widget.activeCrew == 'No crew assigned'
         ? <String>[]
@@ -84,6 +85,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
     setState(() {
       _availableParts = parts;
       _machines = machinesData.map((e) => e['name'] as String).toList();
+      _availableLines = linesData.map((e) => e['name'] as String).toList();
       _availableEngineers = engineersData
           .map((e) => e['full_name'] as String)
           .where(
@@ -91,7 +93,12 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
           ) // Only show assigned shift crew
           .toList();
 
-      // Ensure any already selected engineers (e.g. from an old entry) are still visible
+      // Ensure any already selected lines/engineers are still visible
+      for (var selected in _selectedLines) {
+        if (!_availableLines.contains(selected)) {
+          _availableLines.add(selected);
+        }
+      }
       for (var selected in _selectedEngineers) {
         if (!_availableEngineers.contains(selected)) {
           _availableEngineers.add(selected);

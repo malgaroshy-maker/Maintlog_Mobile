@@ -375,6 +375,23 @@ class _LogbookScreenState extends State<LogbookScreen> {
   }
 
   Widget _buildSpreadsheet() {
+    if (_entries.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.feed_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isNotEmpty
+                  ? 'No entries match your search.'
+                  : 'No log entries found.',
+              style: TextStyle(color: Colors.grey[600], fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
@@ -395,8 +412,17 @@ class _LogbookScreenState extends State<LogbookScreen> {
             DataColumn(label: Text('Notes')),
             DataColumn(label: Text('Actions')),
           ],
-          rows: _entries.map((entry) {
+          rows: _entries.asMap().entries.map((e) {
+            final index = e.key;
+            final entry = e.value;
             return DataRow(
+              color: WidgetStateProperty.resolveWith<Color?>((
+                Set<WidgetState> states,
+              ) {
+                if (index.isEven)
+                  return Theme.of(context).colorScheme.surfaceContainerLow;
+                return null;
+              }),
               onSelectChanged: (_) {
                 Navigator.push(
                   context,
@@ -471,6 +497,14 @@ class _LogbookScreenState extends State<LogbookScreen> {
       await _loadEntries();
       // Passively attempt sync in background
       SyncService().syncAll();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Entry added successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 
@@ -490,6 +524,14 @@ class _LogbookScreenState extends State<LogbookScreen> {
       await _loadEntries();
       // Passively attempt sync in background
       SyncService().syncAll();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Entry updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
     }
   }
 

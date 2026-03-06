@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -16,6 +17,7 @@ import 'screens/reports_screen.dart';
 import 'screens/ai_assistant_screen.dart';
 import 'screens/settings_screen.dart';
 import 'services/sync_service.dart';
+import 'database/local_database.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +89,26 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _currentIndex = 0;
+  int _pendingTasksCount = 0;
+  StreamSubscription? _syncSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPendingCount();
+    _syncSub = SyncService().onSyncEvent.listen((_) => _loadPendingCount());
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadPendingCount() async {
+    final count = await LocalDatabase.instance.getPendingTaskCount();
+    if (mounted) setState(() => _pendingTasksCount = count);
+  }
 
   final List<Widget> _screens = [
     const LogbookScreen(),
@@ -115,7 +137,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             label: AppLocalizations.of(context)!.dashboard,
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.check_box),
+            icon: Badge(
+              isLabelVisible: _pendingTasksCount > 0,
+              label: Text(_pendingTasksCount.toString()),
+              child: const Icon(Icons.check_box),
+            ),
             label: AppLocalizations.of(context)!.checklist,
           ),
           BottomNavigationBarItem(
