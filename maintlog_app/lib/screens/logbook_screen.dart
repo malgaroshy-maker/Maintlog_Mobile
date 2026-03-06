@@ -31,6 +31,10 @@ class _LogbookScreenState extends State<LogbookScreen> {
   void initState() {
     super.initState();
     _loadEntries();
+    // Fire a passive background sync on fresh load
+    SyncService().syncAll().then((_) {
+      if (mounted) _loadEntries();
+    });
   }
 
   String get _dateString {
@@ -97,14 +101,14 @@ class _LogbookScreenState extends State<LogbookScreen> {
                     _hasPendingSync ? Icons.cloud_upload : Icons.cloud_done,
                     color: _hasPendingSync ? Colors.orange : Colors.green,
                   ),
-            tooltip: _hasPendingSync ? 'Pending Syncs' : 'All Synced',
-            onPressed: _hasPendingSync
-                ? () async {
-                    setState(() => _isLoading = true);
-                    await SyncService().syncAll();
-                    await _loadEntries();
-                  }
-                : null,
+            tooltip: _hasPendingSync
+                ? 'Pending Syncs (Tap to sync)'
+                : 'All Synced (Tap to refresh)',
+            onPressed: () async {
+              setState(() => _isLoading = true);
+              await SyncService().syncAll();
+              await _loadEntries();
+            },
           ),
           IconButton(icon: const Icon(Icons.add), onPressed: _addNewRow),
         ],

@@ -27,6 +27,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
     _loadDashboardData();
+    // Fire a passive background sync
+    SyncService().syncAll().then((_) {
+      if (mounted) _loadDashboardData();
+    });
   }
 
   Future<void> _pickDateRange() async {
@@ -144,8 +148,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _hasPendingSync ? Icons.cloud_upload : Icons.cloud_done,
               color: _hasPendingSync ? Colors.orange : Colors.green,
             ),
-            tooltip: _hasPendingSync ? 'Pending Syncs' : 'All Synced',
-            onPressed: _hasPendingSync ? _triggerManualSync : null,
+            tooltip: _hasPendingSync
+                ? 'Pending Syncs (Tap to push)'
+                : 'All Synced (Tap to pull)',
+            onPressed: _triggerManualSync,
           ),
           IconButton(
             icon: const Icon(Icons.date_range),
