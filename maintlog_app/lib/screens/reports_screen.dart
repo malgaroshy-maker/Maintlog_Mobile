@@ -5,6 +5,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:excel/excel.dart' as xl;
 import '../database/local_database.dart';
 
 class ReportsScreen extends StatefulWidget {
@@ -18,14 +19,17 @@ class _ReportsScreenState extends State<ReportsScreen> {
   String _selectedReportType = 'Daily Logbook';
   String _selectedShift = 'All Shifts';
   String _selectedMachine = 'All Machines';
+  String _selectedEngineer = 'All Engineers';
   DateTimeRange? _dateRange;
   List<Map<String, dynamic>> _machines = [];
+  List<Map<String, dynamic>> _engineers = [];
   bool _isExporting = false;
 
   @override
   void initState() {
     super.initState();
     _loadMachines();
+    _loadEngineers();
     _dateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
   }
 
@@ -33,6 +37,13 @@ class _ReportsScreenState extends State<ReportsScreen> {
     final machines = await LocalDatabase.instance.getMachines();
     if (mounted) {
       setState(() => _machines = machines);
+    }
+  }
+
+  Future<void> _loadEngineers() async {
+    final engineers = await LocalDatabase.instance.getEngineers();
+    if (mounted) {
+      setState(() => _engineers = engineers);
     }
   }
 
@@ -73,6 +84,10 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (_selectedMachine != 'All Machines') {
       where += ' AND machine_id = ?';
       args.add(_selectedMachine);
+    }
+    if (_selectedEngineer != 'All Engineers') {
+      where += ' AND engineers LIKE ?';
+      args.add('%' + _selectedEngineer + '%');
     }
 
     return await db.query(
@@ -237,6 +252,63 @@ class _ReportsScreenState extends State<ReportsScreen> {
     if (mounted) setState(() => _isExporting = false);
   }
 
+  Future<void> _exportExcel() async {
+    setState(() => _isExporting = true);
+    try {
+      final entries = await _fetchFilteredEntries();
+      final excel = xl.Excel.createExcel();
+      final sheet = excel['MaintLog Report'];
+
+      // Header row
+      sheet.appendRow([
+        xl.TextCellValue('Date'),
+        xl.TextCellValue('Shift'),
+        xl.TextCellValue('Machine'),
+        xl.TextCellValue('Engineers'),
+        xl.TextCellValue('Work Description'),
+        xl.TextCellValue('Total Time (min)'),
+        xl.TextCellValue('Spare Parts'),
+        xl.TextCellValue('Notes'),
+      ]);
+
+      for (var e in entries) {
+        sheet.appendRow([
+          xl.TextCellValue((e['date'] ?? '').toString()),
+          xl.TextCellValue((e['shift'] ?? '').toString()),
+          xl.TextCellValue((e['machine_id'] ?? '').toString()),
+          xl.TextCellValue((e['engineers'] ?? '').toString()),
+          xl.TextCellValue((e['work_description'] ?? '').toString()),
+          xl.IntCellValue(e['total_time'] as int? ?? 0),
+          xl.TextCellValue((e['parts_used'] ?? '').toString()),
+          xl.TextCellValue((e['notes'] ?? '').toString()),
+        ]);
+      }
+
+      // Remove the default Sheet1 if it exists
+      if (excel.sheets.containsKey('Sheet1')) {
+        excel.delete('Sheet1');
+      }
+
+      final dir = await getTemporaryDirectory();
+      final filePath = dir.path + '/maintlog_report.xlsx';
+      final fileBytes = excel.save();
+      if (fileBytes != null) {
+        final file = File(filePath);
+        await file.writeAsBytes(fileBytes);
+        await SharePlus.instance.share(
+          ShareParams(files: [XFile(file.path)], title: 'MaintLog Report'),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Excel Error: ' + e.toString())));
+      }
+    }
+    if (mounted) setState(() => _isExporting = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateLabel = _dateRange != null
@@ -318,6 +390,29 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 if (val != null) setState(() => _selectedShift = val);
               },
             ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Filter by Engineer',
+                border: OutlineInputBorder(),
+              ),
+              value: _selectedEngineer,
+              items: [
+                const DropdownMenuItem(
+                  value: 'All Engineers',
+                  child: Text('All Engineers'),
+                ),
+                ..._engineers.map(
+                  (e) => DropdownMenuItem(
+                    value: e['full_name'] as String,
+                    child: Text(e['full_name'] as String),
+                  ),
+                ),
+              ],
+              onChanged: (val) {
+                if (val != null) setState(() => _selectedEngineer = val);
+              },
+            ),
             const Spacer(),
             ElevatedButton.icon(
               onPressed: _isExporting ? null : _exportPDF,
@@ -338,6 +433,15 @@ class _ReportsScreenState extends State<ReportsScreen> {
               onPressed: _isExporting ? null : _exportCSV,
               icon: const Icon(Icons.table_view),
               label: const Text('Export to CSV'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+              ),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: _isExporting ? null : _exportExcel,
+              icon: const Icon(Icons.grid_on),
+              label: const Text('Export to Excel (.xlsx)'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.all(16),
               ),

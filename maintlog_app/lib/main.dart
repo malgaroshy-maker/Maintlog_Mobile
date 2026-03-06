@@ -15,6 +15,7 @@ import 'screens/checklist_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/ai_assistant_screen.dart';
 import 'screens/settings_screen.dart';
+import 'services/sync_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,6 +30,11 @@ void main() async {
   final session = Supabase.instance.client.auth.currentSession;
 
   final initialRoute = (stayLoggedIn && session != null) ? '/home' : '/login';
+
+  // Start listening for Supabase Realtime events
+  if (session != null) {
+    SyncService().listen();
+  }
 
   runApp(
     MultiProvider(

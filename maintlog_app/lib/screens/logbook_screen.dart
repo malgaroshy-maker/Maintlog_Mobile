@@ -5,6 +5,7 @@ import '../models/log_entry.dart';
 import '../services/sync_service.dart';
 import '../widgets/new_log_entry_dialog.dart';
 import '../l10n/app_localizations.dart';
+import 'log_entry_detail_screen.dart';
 
 class LogbookScreen extends StatefulWidget {
   const LogbookScreen({super.key});
@@ -26,6 +27,8 @@ class _LogbookScreenState extends State<LogbookScreen> {
   String _activeCrew = 'No crew assigned';
   bool _hasPendingSync = false;
   bool _isLoading = true;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -61,8 +64,22 @@ class _LogbookScreenState extends State<LogbookScreen> {
   Future<void> _loadEntries() async {
     setState(() => _isLoading = true);
 
+    final Future<List<Map<String, dynamic>>> entriesFuture;
+    if (_searchQuery.isNotEmpty) {
+      entriesFuture = LocalDatabase.instance.searchEntries(
+        _dateString,
+        _activeShift,
+        _searchQuery,
+      );
+    } else {
+      entriesFuture = LocalDatabase.instance.getEntries(
+        _dateString,
+        _activeShift,
+      );
+    }
+
     final results = await Future.wait([
-      LocalDatabase.instance.getEntries(_dateString, _activeShift),
+      entriesFuture,
       LocalDatabase.instance.getShiftEngineers(_dateString, _activeShift),
       SyncService().hasPendingSyncs(),
     ]);
@@ -113,13 +130,55 @@ class _LogbookScreenState extends State<LogbookScreen> {
           IconButton(icon: const Icon(Icons.add), onPressed: _addNewRow),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildShiftSelector(),
-          _buildCrewHeader(),
-          Expanded(child: _buildSpreadsheet()),
-        ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await SyncService().syncAll();
+          await _loadEntries();
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search machine, engineer, work...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                            _loadEntries();
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  filled: true,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                ),
+                onChanged: (val) {
+                  setState(() => _searchQuery = val.trim());
+                  _loadEntries();
+                },
+              ),
+            ),
+            _buildShiftSelector(),
+            _buildCrewHeader(),
+            Expanded(child: _buildSpreadsheet()),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addNewRow,
@@ -257,6 +316,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
+          showCheckboxColumn: false,
           headingRowColor: WidgetStateProperty.all(
             Theme.of(context).colorScheme.surfaceContainerHigh,
           ),
@@ -272,6 +332,17 @@ class _LogbookScreenState extends State<LogbookScreen> {
           ],
           rows: _entries.map((entry) {
             return DataRow(
+              onSelectChanged: (_) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => LogEntryDetailScreen(
+                      entry: entry,
+                      onUpdated: _loadEntries,
+                    ),
+                  ),
+                );
+              },
               cells: [
                 DataCell(Text(entry.machineId)),
                 DataCell(Text(entry.lineId ?? '-')),

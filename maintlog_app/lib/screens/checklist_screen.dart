@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../database/local_database.dart';
+import '../services/sync_service.dart';
 
 class ChecklistScreen extends StatefulWidget {
   const ChecklistScreen({super.key});
@@ -11,12 +12,19 @@ class ChecklistScreen extends StatefulWidget {
 
 class _ChecklistScreenState extends State<ChecklistScreen> {
   List<Map<String, dynamic>> _tasks = [];
+  List<Map<String, dynamic>> _engineers = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _loadTasks();
+    _loadEngineers();
+  }
+
+  Future<void> _loadEngineers() async {
+    final data = await LocalDatabase.instance.getEngineers();
+    if (mounted) setState(() => _engineers = data);
   }
 
   Future<void> _loadTasks() async {
@@ -31,6 +39,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
   void _showAddTaskDialog() {
     final descController = TextEditingController();
     String priority = 'Medium';
+    String? assignedTo;
 
     showDialog(
       context: context,
@@ -64,6 +73,29 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       if (val != null) setDialogState(() => priority = val);
                     },
                   ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Assign To (optional)',
+                      border: OutlineInputBorder(),
+                    ),
+                    value: assignedTo,
+                    items: [
+                      const DropdownMenuItem<String>(
+                        value: null,
+                        child: Text('Unassigned'),
+                      ),
+                      ..._engineers.map(
+                        (e) => DropdownMenuItem<String>(
+                          value: e['full_name'] as String,
+                          child: Text(e['full_name'] as String),
+                        ),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setDialogState(() => assignedTo = val);
+                    },
+                  ),
                 ],
               ),
               actions: [
@@ -74,19 +106,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                 FilledButton(
                   onPressed: () async {
                     if (descController.text.trim().isEmpty) return;
+                    final user = Supabase.instance.client.auth.currentUser;
+                    final creatorName =
+                        user?.userMetadata?['full_name'] ??
+                        user?.email ??
+                        'Unknown';
                     final task = {
                       'id':
                           'task_' +
                           DateTime.now().millisecondsSinceEpoch.toString(),
                       'description': descController.text.trim(),
                       'priority': priority,
-                      'created_by': 'Me',
+                      'created_by': creatorName,
                       'status': 'pending',
                       'created_at': DateTime.now().toIso8601String(),
+                      'assigned_to': assignedTo,
                     };
                     await LocalDatabase.instance.insertTask(task);
                     if (ctx.mounted) Navigator.pop(ctx);
                     _loadTasks();
+                    SyncService().syncAll();
                   },
                   child: const Text('Add'),
                 ),
@@ -136,6 +175,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                   onDismissed: (_) async {
                     await LocalDatabase.instance.deleteTask(task['id']);
                     _loadTasks();
+                    SyncService().syncAll();
                   },
                   child: Card(
                     margin: const EdgeInsets.symmetric(
@@ -167,6 +207,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                             completedAt: completedAt,
                           );
                           _loadTasks();
+                          SyncService().syncAll();
                         },
                       ),
                       title: Text(
@@ -184,11 +225,26 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                           Text(
                             'Created by: ' + (task['created_by'] ?? 'Unknown'),
                           ),
+                          if (task['assigned_to'] != null &&
+                              task['assigned_to'].toString().isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2.0),
+                              child: Text(
+                                'Assigned to: ' +
+                                    task['assigned_to'].toString(),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
                           if (isDone && task['completed_by'] != null)
                             Padding(
-                              padding: const EdgeInsets.only(top: 4.0),
+                              padding: const EdgeInsets.only(top: 2.0),
                               child: Text(
-                                'Completed by: ${task['completed_by']}',
+                                'Completed by: ' +
+                                    task['completed_by'].toString(),
                                 style: const TextStyle(
                                   color: Colors.green,
                                   fontSize: 12,

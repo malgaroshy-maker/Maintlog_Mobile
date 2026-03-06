@@ -19,7 +19,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 6) {
@@ -46,6 +46,13 @@ class LocalDatabase {
           try {
             await db.execute(
               "ALTER TABLE todo_tasks ADD COLUMN sync_status TEXT DEFAULT 'pending'",
+            );
+          } catch (_) {}
+        }
+        if (oldVersion < 9) {
+          try {
+            await db.execute(
+              'ALTER TABLE todo_tasks ADD COLUMN assigned_to TEXT',
             );
           } catch (_) {}
         }
@@ -121,6 +128,7 @@ class LocalDatabase {
       created_at TEXT,
       completed_by TEXT,
       completed_at TEXT,
+      assigned_to TEXT,
       sync_status TEXT DEFAULT 'pending'
     )
     ''');
@@ -273,6 +281,22 @@ class LocalDatabase {
     );
   }
 
+  Future<List<Map<String, dynamic>>> searchEntries(
+    String date,
+    String shift,
+    String query,
+  ) async {
+    final db = await instance.database;
+    final wildcard = '%$query%';
+    return await db.query(
+      'log_entries',
+      where:
+          'date = ? AND shift = ? AND (machine_id LIKE ? OR engineers LIKE ? OR work_description LIKE ?)',
+      whereArgs: [date, shift, wildcard, wildcard, wildcard],
+      orderBy: 'created_at DESC',
+    );
+  }
+
   Future<void> deleteEntry(String id) async {
     final db = await instance.database;
 
@@ -320,6 +344,16 @@ class LocalDatabase {
   Future<List<Map<String, dynamic>>> getSpareParts() async {
     final db = await instance.database;
     return await db.query('spare_parts', orderBy: 'name ASC');
+  }
+
+  Future<List<Map<String, dynamic>>> getLowStockParts(int threshold) async {
+    final db = await instance.database;
+    return await db.query(
+      'spare_parts',
+      where: 'stock < ?',
+      whereArgs: [threshold],
+      orderBy: 'stock ASC',
+    );
   }
 
   Future<void> updateSparePartStock(String id, int newStock) async {
@@ -546,6 +580,21 @@ class LocalDatabase {
       'log_entries',
       where: 'date >= ? AND date <= ?',
       whereArgs: [startDate, endDate],
+      orderBy: 'date DESC, created_at DESC',
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> getEntriesByDateRangeAndEngineer(
+    String startDate,
+    String endDate,
+    String engineer,
+  ) async {
+    final db = await instance.database;
+    final wildcard = '%$engineer%';
+    return await db.query(
+      'log_entries',
+      where: 'date >= ? AND date <= ? AND engineers LIKE ?',
+      whereArgs: [startDate, endDate, wildcard],
       orderBy: 'date DESC, created_at DESC',
     );
   }

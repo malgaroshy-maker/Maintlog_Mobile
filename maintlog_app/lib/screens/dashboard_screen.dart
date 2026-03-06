@@ -18,6 +18,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, int> _machineDowntime = {};
   Map<String, int> _shiftCounts = {};
   int _lowStockItems = 0;
+  List<Map<String, dynamic>> _lowStockParts = [];
   bool _isLoading = true;
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now();
@@ -59,8 +60,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final endStr = _endDate.toIso8601String().split('T')[0];
     final dateRangeEntries = await db.getEntriesByDateRange(startStr, endStr);
     final pendingTasks = await db.getPendingTaskCount();
-    final parts = await db.getSpareParts();
-    final lowStockCount = parts.where((p) => (p['stock'] as int) < 5).length;
+    final lowParts = await db.getLowStockParts(5);
     final hasPendingSync = await SyncService().hasPendingSyncs();
 
     // Compute total downtime and machine breakdown
@@ -91,7 +91,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _openTasks = pendingTasks;
         _machineDowntime = machDown;
         _shiftCounts = shiftCount;
-        _lowStockItems = lowStockCount;
+        _lowStockItems = lowParts.length;
+        _lowStockParts = lowParts;
         _hasPendingSync = hasPendingSync;
         _isLoading = false;
       });
@@ -172,31 +173,72 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     _buildDateRangeBanner(),
                     if (_lowStockItems > 0)
-                      Container(
+                      Card(
                         margin: const EdgeInsets.only(bottom: 16),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.orange.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.orange),
+                        color: Colors.orange.withOpacity(0.1),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: const BorderSide(color: Colors.orange),
                         ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.warning_amber,
-                              color: Colors.orange,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                '$_lowStockItems spare parts are low on stock!',
-                                style: const TextStyle(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.warning_amber,
+                                    color: Colors.orange,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Low Stock Alerts ($_lowStockItems)',
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              ..._lowStockParts.map((p) {
+                                final stock = p['stock'] as int? ?? 0;
+                                final isOut = stock == 0;
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 2,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        isOut ? Icons.error : Icons.inventory_2,
+                                        size: 16,
+                                        color: isOut
+                                            ? Colors.red
+                                            : Colors.orange,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        (p['name'] ?? 'Unknown') +
+                                            ' — Stock: ' +
+                                            stock.toString(),
+                                        style: TextStyle(
+                                          color: isOut
+                                              ? Colors.red
+                                              : Colors.orange,
+                                          fontWeight: isOut
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
                         ),
                       ),
                     _buildSummaryCards(context),
@@ -223,6 +265,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                     const SizedBox(height: 16),
                     SizedBox(height: 200, child: _buildShiftPieChart(context)),
+                    const SizedBox(height: 32),
+                    _buildTopMachinesCard(context),
                   ],
                 ),
               ),
@@ -390,6 +434,103 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           );
         }),
+      ),
+    );
+  }
+
+  Widget _buildTopMachinesCard(BuildContext context) {
+    if (_machineDowntime.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Sort by downtime descending, take top 5
+    final sorted = _machineDowntime.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top = sorted.take(5).toList();
+    final maxDowntime = top.first.value;
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.precision_manufacturing, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Top Problematic Machines',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...top.asMap().entries.map((mapEntry) {
+              final rank = mapEntry.key + 1;
+              final machine = mapEntry.value;
+              final fraction = maxDowntime > 0
+                  ? machine.value / maxDowntime
+                  : 0.0;
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      child: Text(
+                        '#$rank',
+                        style: GoogleFonts.inter(
+                          fontWeight: FontWeight.bold,
+                          color: rank == 1
+                              ? Colors.redAccent
+                              : Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: Text(machine.key, overflow: TextOverflow.ellipsis),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 3,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: fraction,
+                          minHeight: 10,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          valueColor: AlwaysStoppedAnimation(
+                            rank == 1
+                                ? Colors.redAccent
+                                : Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 50,
+                      child: Text(
+                        machine.value.toString() + 'm',
+                        textAlign: TextAlign.end,
+                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
       ),
     );
   }

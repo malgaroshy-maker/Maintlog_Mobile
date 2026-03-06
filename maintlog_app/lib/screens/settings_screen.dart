@@ -12,8 +12,43 @@ import 'manage_engineers_screen.dart';
 import 'manage_lines_screen.dart';
 import 'user_approval_screen.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _isAdmin = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAdminRole();
+  }
+
+  Future<void> _checkAdminRole() async {
+    try {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user == null) return;
+
+      final result = await Supabase.instance.client
+          .from('engineers')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle();
+
+      if (result != null && mounted) {
+        final role = (result['role'] ?? '').toString().toLowerCase();
+        setState(() {
+          _isAdmin = role == 'admin' || role == 'lead';
+        });
+      }
+    } catch (_) {
+      // If we can't determine role, default to non-admin
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,24 +174,27 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
 
-          _buildSectionHeader(context, 'Administration (Admin Only)'),
-          ListTile(
-            leading: const Icon(Icons.admin_panel_settings),
-            title: const Text('Management Tools'),
-            subtitle: const Text('Machines, Lines, Engineers, Parts'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => _showAdminModal(context),
-          ),
-          ListTile(
-            leading: const Icon(Icons.how_to_reg),
-            title: const Text('User Approval Dashboard'),
-            subtitle: const Text('Approve or reject new sign-ups'),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const UserApprovalScreen()),
+          // Admin-only section
+          if (_isAdmin) ...[
+            _buildSectionHeader(context, 'Administration (Admin Only)'),
+            ListTile(
+              leading: const Icon(Icons.admin_panel_settings),
+              title: const Text('Management Tools'),
+              subtitle: const Text('Machines, Lines, Engineers, Parts'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => _showAdminModal(context),
             ),
-          ),
+            ListTile(
+              leading: const Icon(Icons.how_to_reg),
+              title: const Text('User Approval Dashboard'),
+              subtitle: const Text('Approve or reject new sign-ups'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UserApprovalScreen()),
+              ),
+            ),
+          ],
         ],
       ),
     );
