@@ -38,6 +38,56 @@ class SettingsScreen extends StatelessWidget {
             onChanged: (_) => themeProvider.toggleTheme(),
           ),
           ListTile(
+            title: const Text('Theme Color'),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: ThemeProvider.availableColors.map((color) {
+                    final isSelected =
+                        themeProvider.seedColor.value == color.value;
+                    return GestureDetector(
+                      onTap: () => themeProvider.setThemeColor(color),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 16),
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: color,
+                          shape: BoxShape.circle,
+                          border: isSelected
+                              ? Border.all(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
+                                  width: 3,
+                                )
+                              : null,
+                          boxShadow: [
+                            if (isSelected)
+                              BoxShadow(
+                                color: color.withOpacity(0.5),
+                                blurRadius: 8,
+                                spreadRadius: 2,
+                              ),
+                          ],
+                        ),
+                        child: isSelected
+                            ? Icon(
+                                Icons.check,
+                                color: Theme.of(context).colorScheme.surface,
+                                size: 20,
+                              )
+                            : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+          ),
+          ListTile(
             leading: const Icon(Icons.language),
             title: const Text('Language'),
             subtitle: const Text('English'),

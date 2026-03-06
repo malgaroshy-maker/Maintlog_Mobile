@@ -20,6 +20,12 @@ class NewLogEntryDialog extends StatefulWidget {
   State<NewLogEntryDialog> createState() => _NewLogEntryDialogState();
 }
 
+class _SelectedPart {
+  String? partId;
+  Map<String, dynamic>? partData;
+  final TextEditingController qtyController = TextEditingController(text: '1');
+}
+
 class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
   final _formKey = GlobalKey<FormState>();
 
@@ -33,15 +39,14 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
   final List<String> _selectedEngineers = [];
 
   final TextEditingController _workDescController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
+  final List<TextEditingController> _timeControllers = [
+    TextEditingController(),
+  ];
+  final List<_SelectedPart> _selectedParts = [_SelectedPart()];
+
   List<Map<String, dynamic>> _availableParts = [];
-  Map<String, dynamic>? _selectedPart;
-  String? _selectedPartId;
-  final TextEditingController _partQuantityController = TextEditingController(
-    text: '1',
-  );
 
   @override
   void initState() {
@@ -62,7 +67,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
         );
       }
       _workDescController.text = widget.initialEntry!.workDescription;
-      _timeController.text = widget.initialEntry!.totalTime.toString();
+      _timeControllers[0].text = widget.initialEntry!.totalTime.toString();
       _notesController.text = widget.initialEntry!.notes ?? '';
     }
   }
@@ -140,17 +145,25 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
         return;
       }
 
-      final parsedTime = _parseTime(_timeController.text);
-
-      String? partsUsedString;
-      if (_selectedPart != null) {
-        final int qty = int.tryParse(_partQuantityController.text) ?? 1;
-        partsUsedString =
-            _selectedPart!['name'].toString() +
-            " (Qty: " +
-            qty.toString() +
-            ")";
+      int parsedTime = 0;
+      for (var ctrl in _timeControllers) {
+        if (ctrl.text.isNotEmpty) {
+          parsedTime += _parseTime(ctrl.text);
+        }
       }
+
+      List<String> partsUsedList = [];
+      for (var sp in _selectedParts) {
+        if (sp.partData != null) {
+          final int qty = int.tryParse(sp.qtyController.text) ?? 1;
+          partsUsedList.add(
+            sp.partData!['name'].toString() + ' (Qty: ' + qty.toString() + ')',
+          );
+        }
+      }
+      String? partsUsedString = partsUsedList.isNotEmpty
+          ? partsUsedList.join(', ')
+          : null;
 
       final entry = LogEntry(
         id: (widget.initialEntry != null && !widget.isDuplicate)
@@ -175,6 +188,178 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
       if (!mounted) return;
       Navigator.of(context).pop(entry);
     }
+  }
+
+  Widget _buildTimeInputs() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Stoppage Intervals (mins or 09:00-10:30)',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ..._timeControllers.asMap().entries.map((entry) {
+          final index = entry.key;
+          final controller = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. 45 or 09:00-10:30',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                    validator: (val) =>
+                        (val == null || val.isEmpty) && index == 0
+                        ? 'Required'
+                        : null,
+                  ),
+                ),
+                if (_timeControllers.length > 1)
+                  IconButton(
+                    icon: const Icon(
+                      Icons.remove_circle_outline,
+                      color: Colors.red,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _timeControllers.removeAt(index);
+                      });
+                    },
+                  ),
+              ],
+            ),
+          );
+        }),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _timeControllers.add(TextEditingController());
+              });
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Interval'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSpareParts() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'Spare Parts Used',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        ..._selectedParts.asMap().entries.map((entry) {
+          final index = entry.key;
+          final sp = entry.value;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                    isExpanded: true,
+                    value: sp.partId,
+                    hint: const Text('Select part'),
+                    items: _availableParts.map((p) {
+                      final isLow = (p['stock'] as int) < 3;
+                      final isOut = (p['stock'] as int) == 0;
+                      return DropdownMenuItem<String>(
+                        value: p['id'] as String,
+                        child: Text(
+                          p['name'].toString() +
+                              " (Stock: " +
+                              p['stock'].toString() +
+                              ")",
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isOut
+                                ? Colors.grey
+                                : (isLow ? Colors.orange : null),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (val) {
+                      setState(() {
+                        sp.partId = val;
+                        sp.partData = _availableParts.firstWhere(
+                          (p) => p['id'] == val,
+                          orElse: () => <String, dynamic>{},
+                        );
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: TextFormField(
+                    controller: sp.qtyController,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Qty',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ),
+                if (_selectedParts.length > 1)
+                  IconButton(
+                    icon: const Icon(
+                      Icons.remove_circle_outline,
+                      color: Colors.red,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _selectedParts.removeAt(index);
+                      });
+                    },
+                  ),
+              ],
+            ),
+          );
+        }),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            onPressed: () {
+              setState(() {
+                _selectedParts.add(_SelectedPart());
+              });
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Spare Part'),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -275,71 +460,9 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
                           val == null || val.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _timeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Total Time (mins or intervals)',
-                        hintText: 'e.g. 45 or 09:00-10:30 + 11:00-11:15',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Required' : null,
-                    ),
+                    _buildTimeInputs(),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: DropdownButtonFormField<String>(
-                            decoration: const InputDecoration(
-                              labelText: 'Spare Part Used',
-                              border: OutlineInputBorder(),
-                            ),
-                            isExpanded: true,
-                            initialValue: _selectedPartId,
-                            items: _availableParts.map((p) {
-                              final isLow = (p['stock'] as int) < 3;
-                              final isOut = (p['stock'] as int) == 0;
-                              return DropdownMenuItem<String>(
-                                value: p['id'] as String,
-                                child: Text(
-                                  p['name'].toString() +
-                                      " (Stock: " +
-                                      p['stock'].toString() +
-                                      ")",
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: isOut
-                                        ? Colors.grey
-                                        : (isLow ? Colors.orange : null),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (val) {
-                              setState(() {
-                                _selectedPartId = val;
-                                _selectedPart = _availableParts.firstWhere(
-                                  (p) => p['id'] == val,
-                                );
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          flex: 1,
-                          child: TextFormField(
-                            controller: _partQuantityController,
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              labelText: 'Qty',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                    _buildSpareParts(),
                     const SizedBox(height: 16),
                     TextFormField(
                       controller: _notesController,

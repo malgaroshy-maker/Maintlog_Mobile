@@ -61,8 +61,8 @@ class MaintLogApp extends StatelessWidget {
       ],
       supportedLocales: const [Locale('en'), Locale('ar')],
       themeMode: themeProvider.themeMode,
-      theme: ThemeProvider.lightTheme,
-      darkTheme: ThemeProvider.darkTheme,
+      theme: themeProvider.lightTheme,
+      darkTheme: themeProvider.darkTheme,
       initialRoute: initialRoute,
       routes: {
         '/login': (context) => const LoginScreen(),
