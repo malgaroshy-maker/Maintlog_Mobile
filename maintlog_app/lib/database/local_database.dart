@@ -19,7 +19,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 9,
+      version: 10,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 6) {
@@ -54,6 +54,11 @@ class LocalDatabase {
             await db.execute(
               'ALTER TABLE todo_tasks ADD COLUMN assigned_to TEXT',
             );
+          } catch (_) {}
+        }
+        if (oldVersion < 10) {
+          try {
+            await db.execute('ALTER TABLE machines ADD COLUMN line_id TEXT');
           } catch (_) {}
         }
       },
@@ -94,6 +99,7 @@ class LocalDatabase {
     CREATE TABLE machines (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
+      line_id TEXT,
       sync_status TEXT DEFAULT 'synced'
     )
     ''');
@@ -344,11 +350,11 @@ class LocalDatabase {
     );
   }
 
-  Future<void> updateMachine(String id, String name) async {
+  Future<void> updateMachine(String id, String name, String? lineId) async {
     final db = await instance.database;
     await db.update(
       'machines',
-      {'name': name, 'sync_status': 'pending'},
+      {'name': name, 'line_id': lineId, 'sync_status': 'pending'},
       where: 'id = ?',
       whereArgs: [id],
     );

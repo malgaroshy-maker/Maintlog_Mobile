@@ -30,8 +30,9 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
   final _formKey = GlobalKey<FormState>();
 
   String? _selectedMachine;
-  List<String> _machines = [];
+  List<Map<String, dynamic>> _allMachinesRaw = [];
 
+  List<Map<String, dynamic>> _allLinesRaw = [];
   List<String> _availableLines = [];
   final List<String> _selectedLines = [];
 
@@ -84,7 +85,8 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
 
     setState(() {
       _availableParts = parts;
-      _machines = machinesData.map((e) => e['name'] as String).toList();
+      _allMachinesRaw = machinesData;
+      _allLinesRaw = linesData;
       _availableLines = linesData.map((e) => e['name'] as String).toList();
       _availableEngineers = engineersData
           .map((e) => e['full_name'] as String)
@@ -105,6 +107,35 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
         }
       }
     });
+  }
+
+  List<String> get _computedMachineNames {
+    if (_selectedLines.isEmpty) return [];
+
+    final selectedLineIds = _allLinesRaw
+        .where((l) => _selectedLines.contains(l['name']))
+        .map((l) => l['id'].toString())
+        .toSet();
+
+    final filtered = _allMachinesRaw.where((m) {
+      final mLineId = m['line_id']?.toString();
+      return mLineId != null && selectedLineIds.contains(mLineId);
+    }).toList();
+
+    final List<String> names = filtered.map((m) {
+      final lineName = _allLinesRaw.firstWhere(
+        (l) => l['id'].toString() == m['line_id'].toString(),
+        orElse: () => {'name': 'Unknown'},
+      )['name'];
+      return '${m['name']} ($lineName)';
+    }).toList();
+
+    // Preserve the initial selection if it's not in the filtered list
+    if (_selectedMachine != null && !names.contains(_selectedMachine)) {
+      names.add(_selectedMachine!);
+    }
+
+    return names;
   }
 
   int _parseTime(String input) {
@@ -142,6 +173,12 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
       if (_selectedLines.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select at least one line')),
+        );
+        return;
+      }
+      if (_selectedMachine == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a machine')),
         );
         return;
       }
@@ -391,23 +428,6 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
               Expanded(
                 child: ListView(
                   children: [
-                    DropdownButtonFormField<String>(
-                      decoration: const InputDecoration(
-                        labelText: 'Machine',
-                        border: OutlineInputBorder(),
-                      ),
-                      initialValue: _selectedMachine,
-                      items: _machines
-                          .map(
-                            (m) => DropdownMenuItem(value: m, child: Text(m)),
-                          )
-                          .toList(),
-                      onChanged: (val) =>
-                          setState(() => _selectedMachine = val),
-                      validator: (val) =>
-                          val == null ? 'Please select a machine' : null,
-                    ),
-                    const SizedBox(height: 16),
                     const Text(
                       'Lines (Multi-select)',
                       style: TextStyle(fontWeight: FontWeight.bold),
@@ -425,11 +445,32 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
                                 _selectedLines.add(line);
                               } else {
                                 _selectedLines.remove(line);
+                                // Clear machine if its line was removed
+                                if (_selectedMachine != null &&
+                                    _selectedMachine!.contains('($line)')) {
+                                  _selectedMachine = null;
+                                }
                               }
                             });
                           },
                         );
                       }).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        labelText: 'Machine',
+                        border: OutlineInputBorder(),
+                      ),
+                      value: _selectedMachine,
+                      hint: const Text('Select Lines first'),
+                      items: _computedMachineNames
+                          .map(
+                            (m) => DropdownMenuItem(value: m, child: Text(m)),
+                          )
+                          .toList(),
+                      onChanged: (val) =>
+                          setState(() => _selectedMachine = val),
                     ),
                     const SizedBox(height: 16),
                     const Text(

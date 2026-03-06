@@ -49,7 +49,7 @@ class SyncService {
 
     await _syncTable('spare_parts', ['id', 'name', 'part_number', 'stock']);
 
-    await _syncTable('machines', ['id', 'name']);
+    await _syncTable('machines', ['id', 'name', 'line_id']);
 
     await _syncTable('engineers', ['id', 'full_name', 'pin', 'role']);
 
@@ -256,7 +256,7 @@ class SyncService {
           'assigned_to',
         ],
         'spare_parts': ['id', 'name', 'part_number', 'stock'],
-        'machines': ['id', 'name'],
+        'machines': ['id', 'name', 'line_id'],
         'engineers': ['id', 'full_name', 'pin', 'role'],
       };
 

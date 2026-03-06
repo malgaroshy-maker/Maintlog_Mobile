@@ -22,6 +22,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   String _selectedEngineer = 'All Engineers';
   DateTimeRange? _dateRange;
   List<Map<String, dynamic>> _machines = [];
+  List<Map<String, dynamic>> _lines = [];
   List<Map<String, dynamic>> _engineers = [];
   bool _isExporting = false;
 
@@ -35,9 +36,19 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
   Future<void> _loadMachines() async {
     final machines = await LocalDatabase.instance.getMachines();
+    final lines = await LocalDatabase.instance.getLines();
     if (mounted) {
-      setState(() => _machines = machines);
+      setState(() {
+        _machines = machines;
+        _lines = lines;
+      });
     }
+  }
+
+  String _getLineName(String? lineId) {
+    if (lineId == null) return 'Unassigned';
+    final line = _lines.where((l) => l['id'] == lineId).firstOrNull;
+    return line?['name']?.toString() ?? 'Unknown Line';
   }
 
   Future<void> _loadEngineers() async {
@@ -317,7 +328,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
 
     final machineItems = ['All Machines'];
     for (var m in _machines) {
-      machineItems.add(m['name'] ?? '');
+      machineItems.add(
+        '${m['name']} (${_getLineName(m['line_id']?.toString())})',
+      );
     }
 
     return Scaffold(
