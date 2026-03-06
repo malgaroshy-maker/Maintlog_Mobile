@@ -24,6 +24,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
   ];
 
   List<LogEntry> _entries = [];
+  List<Map<String, dynamic>> _spareParts = [];
   String _activeCrew = 'No crew assigned';
   bool _hasPendingSync = false;
   bool _isLoading = true;
@@ -94,6 +95,10 @@ class _LogbookScreenState extends State<LogbookScreen> {
       _hasPendingSync = hasPendingSync;
       _isLoading = false;
     });
+
+    // Load spare parts for part number lookup
+    final sp = await LocalDatabase.instance.getSpareParts();
+    if (mounted) setState(() => _spareParts = sp);
   }
 
   @override
@@ -311,12 +316,72 @@ class _LogbookScreenState extends State<LogbookScreen> {
     }
   }
 
+  Widget _buildPartsCell(String? partsUsed) {
+    if (partsUsed == null || partsUsed.isEmpty || partsUsed == '-') {
+      return const Text('-');
+    }
+
+    // Parts can be comma-separated or newline-separated
+    final partEntries = partsUsed
+        .split(RegExp(r'[,\n]'))
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+
+    return SizedBox(
+      width: 200,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: partEntries.map((partEntry) {
+          // Extract part name before "(Qty:"
+          String partName = partEntry;
+          final qtyIdx = partEntry.indexOf('(Qty:');
+          if (qtyIdx > 0) {
+            partName = partEntry.substring(0, qtyIdx).trim();
+          }
+
+          // Look up part number from spare parts list
+          String? partNumber;
+          for (final sp in _spareParts) {
+            if ((sp['name'] ?? '').toString().toLowerCase() ==
+                partName.toLowerCase()) {
+              partNumber = sp['part_number']?.toString();
+              break;
+            }
+          }
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(partEntry, style: const TextStyle(fontSize: 13)),
+                if (partNumber != null && partNumber.isNotEmpty)
+                  Text(
+                    '#$partNumber',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: Theme.of(context).colorScheme.tertiary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildSpreadsheet() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: SingleChildScrollView(
         child: DataTable(
           showCheckboxColumn: false,
+          dataRowMinHeight: 48,
+          dataRowMaxHeight: double.infinity,
           headingRowColor: WidgetStateProperty.all(
             Theme.of(context).colorScheme.surfaceContainerHigh,
           ),
@@ -357,7 +422,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
                   ),
                 ),
                 DataCell(Text(entry.totalTime.toString() + 'm')),
-                DataCell(Text(entry.partsUsed ?? '-')),
+                DataCell(_buildPartsCell(entry.partsUsed)),
                 DataCell(Text(entry.notes ?? '')),
                 DataCell(
                   Row(

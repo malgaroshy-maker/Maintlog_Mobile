@@ -150,7 +150,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ListTile(
             leading: const Icon(Icons.person),
             title: const Text('Profile Settings'),
-            subtitle: Text(email),
+            subtitle: Text(user?.userMetadata?['full_name'] ?? email),
             trailing: const Icon(Icons.chevron_right),
             onTap: () => _showProfileDialog(context, email),
           ),
@@ -172,6 +172,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Navigator.pushReplacementNamed(context, '/login');
               }
             },
+          ),
+
+          _buildSectionHeader(context, 'Inventory'),
+          ListTile(
+            leading: const Icon(Icons.inventory_2),
+            title: const Text('Spare Parts Inventory'),
+            subtitle: const Text('Add, edit, or remove spare parts'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SparePartsScreen()),
+            ),
           ),
 
           // Admin-only section
@@ -244,6 +256,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = Supabase.instance.client.auth.currentUser;
     final createdAt = user?.createdAt ?? 'Unknown';
     final uid = user?.id ?? 'N/A';
+    final displayName = user?.userMetadata?['full_name'] ?? 'Not set';
 
     showDialog(
       context: context,
@@ -253,9 +266,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _profileRow(Icons.badge, 'Display Name', displayName),
+            const SizedBox(height: 12),
             _profileRow(Icons.email, 'Email', email),
             const SizedBox(height: 12),
-            _profileRow(Icons.badge, 'User ID', uid.substring(0, 8) + '...'),
+            _profileRow(
+              Icons.fingerprint,
+              'User ID',
+              uid.substring(0, 8) + '...',
+            ),
             const SizedBox(height: 12),
             _profileRow(
               Icons.calendar_today,
@@ -270,12 +289,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('Close'),
           ),
           FilledButton.icon(
-            onPressed: () async {
+            onPressed: () {
+              Navigator.pop(ctx);
+              _showChangeNameDialog(context);
+            },
+            icon: const Icon(Icons.edit),
+            label: const Text('Change Name'),
+          ),
+          FilledButton.icon(
+            onPressed: () {
               Navigator.pop(ctx);
               _showChangePasswordDialog(context);
             },
             icon: const Icon(Icons.lock),
             label: const Text('Change Password'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showChangeNameDialog(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final nameController = TextEditingController(
+      text: user?.userMetadata?['full_name'] ?? '',
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Change Display Name'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'Display Name',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.badge),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final newName = nameController.text.trim();
+              if (newName.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Name cannot be empty')),
+                );
+                return;
+              }
+              try {
+                // Update Supabase auth metadata
+                await Supabase.instance.client.auth.updateUser(
+                  UserAttributes(data: {'full_name': newName}),
+                );
+                // Update engineers table
+                if (user != null) {
+                  await Supabase.instance.client
+                      .from('engineers')
+                      .update({'full_name': newName})
+                      .eq('id', user.id);
+                }
+                if (ctx.mounted) Navigator.pop(ctx);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Name updated successfully!')),
+                  );
+                  setState(() {}); // Refresh UI
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
+                }
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

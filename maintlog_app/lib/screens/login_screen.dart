@@ -12,6 +12,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
   bool _isLoading = false;
   bool _isSignUp = false;
   bool _rememberMe = false;
@@ -44,6 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
         await supabase.auth.signUp(
           email: _emailController.text.trim(),
           password: _passwordController.text.trim(),
+          data: {'full_name': _nameController.text.trim()},
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -141,6 +143,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   prefixIcon: Icon(Icons.person),
                 ),
               ),
+              if (_isSignUp) ...[
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Full Name',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.badge),
+                  ),
+                ),
+              ],
               const SizedBox(height: 16),
               TextField(
                 controller: _passwordController,
@@ -318,6 +331,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 }
