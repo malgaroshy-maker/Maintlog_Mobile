@@ -1,0 +1,118 @@
+﻿Analyzing maintlog_app...                                       
+
+   info - Use interpolation to compose strings and values - lib\create_admin.dart:18:11 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\create_admin_pure.dart:15:11 - prefer_interpolation_to_compose_strings
+   info - 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion - lib\providers\theme_provider.dart:44:41 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\ai_assistant_screen.dart:73:7 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\ai_assistant_screen.dart:351:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\ai_assistant_screen.dart:353:15 - prefer_interpolation_to_compose_strings
+   info - Statements in an if should be enclosed in a block - lib\screens\ai_assistant_screen.dart:388:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\ai_assistant_screen.dart:397:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\ai_assistant_screen.dart:401:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\ai_assistant_screen.dart:405:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\ai_assistant_screen.dart:407:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\ai_assistant_screen.dart:413:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\checklist_screen.dart:70:7 - curly_braces_in_flow_control_structures
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\checklist_screen.dart:119:21 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\checklist_screen.dart:153:27 - prefer_interpolation_to_compose_strings
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\checklist_screen.dart:218:21 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\checklist_screen.dart:232:21 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\checklist_screen.dart:459:29 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\checklist_screen.dart:466:33 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\checklist_screen.dart:479:33 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:132:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\dashboard_screen.dart:235:46 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\dashboard_screen.dart:282:45 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\dashboard_screen.dart:341:13 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\dashboard_screen.dart:482:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\dashboard_screen.dart:484:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\dashboard_screen.dart:580:25 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\log_entry_detail_screen.dart:43:42 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\log_entry_detail_screen.dart:69:48 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\log_entry_detail_screen.dart:70:49 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\log_entry_detail_screen.dart:88:23 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\log_entry_detail_screen.dart:91:45 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\log_entry_detail_screen.dart:111:22 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\log_entry_detail_screen.dart:246:60 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:45:12 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:47:9 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\logbook_screen.dart:174:57 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:233:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:245:13 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:268:27 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:310:15 - prefer_interpolation_to_compose_strings
+   info - Statements in an if should be enclosed in a block - lib\screens\logbook_screen.dart:423:19 - curly_braces_in_flow_control_structures
+   info - Use interpolation to compose strings and values - lib\screens\logbook_screen.dart:450:31 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\login_screen.dart:106:47 - prefer_interpolation_to_compose_strings
+   info - Statements in an if should be enclosed in a block - lib\screens\manage_engineers_screen.dart:26:7 - curly_braces_in_flow_control_structures
+   info - Use interpolation to compose strings and values - lib\screens\manage_engineers_screen.dart:91:29 - prefer_interpolation_to_compose_strings
+   info - Statements in an if should be enclosed in a block - lib\screens\manage_lines_screen.dart:26:7 - curly_braces_in_flow_control_structures
+   info - Use interpolation to compose strings and values - lib\screens\manage_lines_screen.dart:61:25 - prefer_interpolation_to_compose_strings
+   info - Statements in an if should be enclosed in a block - lib\screens\manage_machines_screen.dart:34:7 - curly_braces_in_flow_control_structures
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\manage_machines_screen.dart:75:25 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\manage_machines_screen.dart:150:31 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\manage_machines_screen.dart:152:31 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:74:12 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:76:9 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:101:16 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:126:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:134:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:136:21 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:140:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:140:46 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:182:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:190:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:194:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:196:21 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:210:47 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:234:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:236:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:238:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:240:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:242:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:244:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:250:25 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:260:47 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:304:24 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:317:47 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\reports_screen.dart:326:11 - prefer_interpolation_to_compose_strings
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\screens\reports_screen.dart:412:15 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion - lib\screens\settings_screen.dart:84:49 - deprecated_member_use
+   info - 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion - lib\screens\settings_screen.dart:84:64 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\settings_screen.dart:105:46 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\settings_screen.dart:276:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\settings_screen.dart:444:44 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\settings_screen.dart:645:9 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\settings_screen.dart:700:48 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\settings_screen.dart:719:29 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\settings_screen.dart:733:34 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\spare_parts_screen.dart:109:23 - prefer_interpolation_to_compose_strings
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\spare_parts_screen.dart:231:54 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\screens\spare_parts_screen.dart:232:57 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\screens\spare_parts_screen.dart:250:29 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\spare_parts_screen.dart:260:37 - prefer_interpolation_to_compose_strings
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\spare_parts_screen.dart:322:41 - use_build_context_synchronously
+   info - Use interpolation to compose strings and values - lib\screens\user_approval_screen.dart:57:34 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\user_approval_screen.dart:79:47 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\user_approval_screen.dart:123:47 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\user_approval_screen.dart:140:47 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\user_approval_screen.dart:229:30 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\screens\user_approval_screen.dart:229:48 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:128:19 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:150:20 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:153:11 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:155:15 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:201:9 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:206:18 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:252:17 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\services\sync_service.dart:341:18 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:204:13 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:204:59 - prefer_interpolation_to_compose_strings
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\widgets\new_log_entry_dialog.dart:329:21 - deprecated_member_use
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:337:27 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:339:31 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:423:23 - prefer_interpolation_to_compose_strings
+   info - Use interpolation to compose strings and values - lib\widgets\new_log_entry_dialog.dart:424:23 - prefer_interpolation_to_compose_strings
+   info - 'value' is deprecated and shouldn't be used. Use initialValue instead. This will set the initial value for the form field. This feature was deprecated after v3.33.0-1.0.pre - lib\widgets\new_log_entry_dialog.dart:465:23 - deprecated_member_use
+   info - Use interpolation to compose strings and values - test\admin_setup_test.dart:18:13 - prefer_interpolation_to_compose_strings
+

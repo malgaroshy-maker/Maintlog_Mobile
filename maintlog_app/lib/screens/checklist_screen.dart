@@ -66,11 +66,12 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
 
   Future<void> _loadTasks() async {
     final tasks = await LocalDatabase.instance.getTasks();
-    if (mounted)
+    if (mounted) {
       setState(() {
         _tasks = tasks;
         _isLoading = false;
       });
+    }
   }
 
   void _showAddTaskDialog() {
@@ -116,7 +117,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       labelText: 'Assign To (optional)',
                       border: OutlineInputBorder(),
                     ),
-                    value: assignedTo,
+                    initialValue: assignedTo,
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
@@ -149,9 +150,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         user?.email ??
                         'Unknown';
                     final task = {
-                      'id':
-                          'task_' +
-                          DateTime.now().millisecondsSinceEpoch.toString(),
+                      'id': 'task_${DateTime.now().millisecondsSinceEpoch}',
                       'description': descController.text.trim(),
                       'priority': priority,
                       'created_by': creatorName,
@@ -215,7 +214,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       labelText: 'Priority',
                       border: OutlineInputBorder(),
                     ),
-                    value: priority,
+                    initialValue: priority,
                     items: ['Low', 'Medium', 'High']
                         .map((p) => DropdownMenuItem(value: p, child: Text(p)))
                         .toList(),
@@ -229,7 +228,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                       labelText: 'Assign To (optional)',
                       border: OutlineInputBorder(),
                     ),
-                    value: assignedTo,
+                    initialValue: assignedTo,
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
@@ -456,15 +455,14 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Created by: ' + (task['created_by'] ?? 'Unknown'),
+                            'Created by: ${task['created_by'] ?? 'Unknown'}',
                           ),
                           if (task['assigned_to'] != null &&
                               task['assigned_to'].toString().isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),
                               child: Text(
-                                'Assigned to: ' +
-                                    task['assigned_to'].toString(),
+                                'Assigned to: ${task['assigned_to']}',
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.primary,
                                   fontSize: 12,
@@ -476,8 +474,7 @@ class _ChecklistScreenState extends State<ChecklistScreen> {
                             Padding(
                               padding: const EdgeInsets.only(top: 2.0),
                               child: Text(
-                                'Completed by: ' +
-                                    task['completed_by'].toString(),
+                                'Completed by: ${task['completed_by']}',
                                 style: const TextStyle(
                                   color: Colors.green,
                                   fontSize: 12,

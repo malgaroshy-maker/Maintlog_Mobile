@@ -125,9 +125,7 @@ class SyncService {
                 // Remote is newer — skip push, pull remote instead
                 shouldPush = false;
                 debugPrint(
-                  'Conflict: remote $tableName entry ' +
-                      entry['id'].toString() +
-                      ' is newer, pulling.',
+                  'Conflict: remote $tableName entry ${entry['id']} is newer, pulling.',
                 );
               }
             }
@@ -147,13 +145,10 @@ class SyncService {
           where: 'id = ?',
           whereArgs: [entry['id']],
         );
-        debugPrint('Synced $tableName entry: ' + entry['id'].toString());
+        debugPrint('Synced $tableName entry: ${entry['id']}');
       } catch (e) {
         debugPrint(
-          'Error syncing $tableName entry ' +
-              entry['id'].toString() +
-              ': ' +
-              e.toString(),
+          'Error syncing $tableName entry ${entry['id']}: $e',
         );
       }
     }
@@ -198,12 +193,10 @@ class SyncService {
         );
       }
       debugPrint(
-        'Pulled ' +
-            remoteEntries.length.toString() +
-            ' remote entries for $tableName',
+        'Pulled ${remoteEntries.length} remote entries for $tableName',
       );
     } catch (e) {
-      debugPrint('Error fetching remote $tableName entries: ' + e.toString());
+      debugPrint('Error fetching remote $tableName entries: $e');
     }
   }
 
@@ -249,7 +242,7 @@ class SyncService {
             table: table,
             callback: (payload) {
               debugPrint(
-                'Realtime event on $table: ' + payload.eventType.toString(),
+                'Realtime event on $table: ${payload.eventType}',
               );
               // Trigger a sync for this table
               _syncTableSilently(table);
@@ -338,7 +331,7 @@ class SyncService {
       }
       _syncController.add(null);
     } catch (e) {
-      debugPrint('Silent sync error for $table: ' + e.toString());
+      debugPrint('Silent sync error for $table: $e');
     }
   }
 

@@ -42,11 +42,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
   }
 
   String get _dateString {
-    return _selectedDate.year.toString() +
-        '-' +
-        _selectedDate.month.toString().padLeft(2, '0') +
-        '-' +
-        _selectedDate.day.toString().padLeft(2, '0');
+    return '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
   }
 
   Future<void> _pickDate() async {
@@ -171,7 +167,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
                   filled: true,
                   fillColor: Theme.of(
                     context,
-                  ).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                  ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
                 ),
                 onChanged: (val) {
                   setState(() => _searchQuery = val.trim());
@@ -230,7 +226,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Assigned Crew: ' + _activeCrew,
+              'Assigned Crew: $_activeCrew',
               style: GoogleFonts.inter(fontWeight: FontWeight.w500),
               overflow: TextOverflow.ellipsis,
             ),
@@ -242,7 +238,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
           ),
           const SizedBox(width: 8),
           Text(
-            _entries.length.toString() + ' entries | ' + _dateString,
+            '${_entries.length} entries | $_dateString',
             style: const TextStyle(color: Colors.grey, fontSize: 12),
           ),
         ],
@@ -265,7 +261,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             return AlertDialog(
-              title: Text('Assign Crew - ' + _activeShift),
+              title: Text('Assign Crew - $_activeShift'),
               content: SizedBox(
                 width: double.maxFinite,
                 child: ListView(
@@ -307,7 +303,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
 
     if (selectedEngineers != null) {
       await LocalDatabase.instance.saveShiftEngineers({
-        'id': _dateString + '_' + _activeShift,
+        'id': '${_dateString}_$_activeShift',
         'shift': _activeShift,
         'date': _dateString,
         'engineer_names': selectedEngineers.join(', '),
@@ -419,8 +415,9 @@ class _LogbookScreenState extends State<LogbookScreen> {
               color: WidgetStateProperty.resolveWith<Color?>((
                 Set<WidgetState> states,
               ) {
-                if (index.isEven)
+                if (index.isEven) {
                   return Theme.of(context).colorScheme.surfaceContainerLow;
+                }
                 return null;
               }),
               onSelectChanged: (_) {
@@ -447,7 +444,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
                     ),
                   ),
                 ),
-                DataCell(Text(entry.totalTime.toString() + 'm')),
+                DataCell(Text('${entry.totalTime}m')),
                 DataCell(_buildPartsCell(entry.partsUsed)),
                 DataCell(Text(entry.notes ?? '')),
                 DataCell(

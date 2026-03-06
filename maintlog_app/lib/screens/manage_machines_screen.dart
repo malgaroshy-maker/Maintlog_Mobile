@@ -30,12 +30,13 @@ class _ManageMachinesScreenState extends State<ManageMachinesScreen> {
   Future<void> _load() async {
     final machinesData = await LocalDatabase.instance.getMachines();
     final linesData = await LocalDatabase.instance.getLines();
-    if (mounted)
+    if (mounted) {
       setState(() {
         _machines = machinesData;
         _lines = linesData;
         _isLoading = false;
       });
+    }
   }
 
   void _showDialog({Map<String, dynamic>? existing}) {
@@ -72,7 +73,7 @@ class _ManageMachinesScreenState extends State<ManageMachinesScreen> {
                       )
                     else if (isEdit)
                       DropdownButtonFormField<String>(
-                        value: selectedEditLineId,
+                        initialValue: selectedEditLineId,
                         decoration: const InputDecoration(
                           labelText: 'Assigned Line',
                           border: OutlineInputBorder(),
@@ -147,10 +148,7 @@ class _ManageMachinesScreenState extends State<ManageMachinesScreen> {
                       for (final lineId in selectedNewLines) {
                         await LocalDatabase.instance.insertMachine({
                           'id':
-                              'm_' +
-                              DateTime.now().millisecondsSinceEpoch.toString() +
-                              '_' +
-                              lineId,
+                              'm_${DateTime.now().millisecondsSinceEpoch}_$lineId',
                           'name': name,
                           'line_id': lineId,
                         });

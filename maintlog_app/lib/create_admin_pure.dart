@@ -12,7 +12,7 @@ void main() async {
       email: 'malgaroshy@ai.gg',
       password: 'Admin12341234',
     );
-    print('Admin user created successfully: ' + res.user!.id);
+    print('Admin user created successfully: ${res.user!.id}');
   } catch (e) {
     print('Failed Admin creation: \$e');
   }

@@ -40,7 +40,7 @@ class LogEntryDetailScreen extends StatelessWidget {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
-              color: cs.primaryContainer.withOpacity(0.3),
+              color: cs.primaryContainer.withValues(alpha: 0.3),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
@@ -66,8 +66,8 @@ class LogEntryDetailScreen extends StatelessWidget {
                           ),
                           decoration: BoxDecoration(
                             color: entry.syncStatus == 'synced'
-                                ? Colors.green.withOpacity(0.2)
-                                : Colors.orange.withOpacity(0.2),
+                                ? Colors.green.withValues(alpha: 0.2)
+                                : Colors.orange.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -85,10 +85,10 @@ class LogEntryDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      entry.date + '  •  ' + entry.shift,
+                      '${entry.date}  •  ${entry.shift}',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: cs.onSurface.withOpacity(0.7),
+                        color: cs.onSurface.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -108,7 +108,7 @@ class LogEntryDetailScreen extends StatelessWidget {
               context,
               icon: Icons.timer,
               label: 'Total Downtime',
-              value: entry.totalTime.toString() + ' minutes',
+              value: '${entry.totalTime} minutes',
             ),
             if (entry.lineId != null && entry.lineId!.isNotEmpty)
               _buildDetailTile(
@@ -243,7 +243,9 @@ class LogEntryDetailScreen extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 11,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
         const SizedBox(height: 4),

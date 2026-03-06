@@ -15,7 +15,7 @@ void main() async {
       email: 'malgaroshy@ai.gg',
       password: 'Admin12341234',
     );
-    print('Admin user created: ' + res.user!.id);
+    print('Admin user created: ${res.user!.id}');
   } catch (e) {
     print('Failed to create admin user: \$e');
   }

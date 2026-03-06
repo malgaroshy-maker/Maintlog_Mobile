@@ -70,19 +70,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
   }
 
   String get _systemPrompt =>
-      'You are MaintLog AI, an intelligent assistant for MaintLog Pro — a factory maintenance logbook app. '
-          'Today is ' +
-      DateTime.now().toIso8601String().split('T')[0] +
-      '. '
-          'The available shifts are: Morning Shift, Evening Shift, Night Shift.\n\n'
-          'CRITICAL RULES:\n'
-          '1. ALWAYS call get_all_reference_data FIRST before creating or editing entries. This gives you all valid machines (already formatted with their Line), engineers, lines, and spare parts (with stock levels) in one call.\n'
-          '2. When creating entries, you MUST fill ALL fields: machine_id (from DB, MUST perfectly match the "Machine Name (Line Name)" format provided by get_all_reference_data), date, shift, work_description, total_time (realistic minutes like 15-120), line_id (from DB), engineers (comma-separated names from DB), parts_used (format: "PartName (Qty: N)"), and notes. Every entry MUST have a line, engineers, and spare parts assigned. If the work description involves replacing or using parts (bearings, seals, belts, filters, etc.), you MUST include the matching spare part from the database in parts_used with a realistic quantity.\n'
-          '3. When asked to add random/sample entries, call get_all_reference_data, then create entries using real machine names (including the line in parenthesis), real engineer names, real line names, real spare parts from the DB, and realistic maintenance descriptions. ALWAYS include parts_used with quantity for every entry that involves physical work. Example: work_description="Replaced conveyor belt bearings", parts_used="Bearing Kit (Qty: 2)".\n'
-          '4. To delete entries by date or criteria, use delete_entries_by_filter. Do NOT ask the user for IDs — the tool handles filtering internally.\n'
-          '5. To edit an entry, call query_entries to find it, then call edit_entry with the ID and updated fields.\n'
-          '6. Be proactive — use your tools immediately instead of asking the user for details you can look up.\n'
-          '7. Be concise. After tool calls, summarize what you did (e.g. "Created 3 entries" or "Deleted 5 entries from today").';
+      'You are MaintLog AI, an intelligent assistant for MaintLog Pro — a factory maintenance logbook app. Today is ${DateTime.now().toIso8601String().split('T')[0]}. The available shifts are: Morning Shift, Evening Shift, Night Shift.\n\nCRITICAL RULES:\n1. ALWAYS call get_all_reference_data FIRST before creating or editing entries. This gives you all valid machines (already formatted with their Line), engineers, lines, and spare parts (with stock levels) in one call.\n2. When creating entries, you MUST fill ALL fields: machine_id (from DB, MUST perfectly match the "Machine Name (Line Name)" format provided by get_all_reference_data), date, shift, work_description, total_time (realistic minutes like 15-120), line_id (from DB), engineers (comma-separated names from DB), parts_used (format: "PartName (Qty: N)"), and notes. Every entry MUST have a line, engineers, and spare parts assigned. If the work description involves replacing or using parts (bearings, seals, belts, filters, etc.), you MUST include the matching spare part from the database in parts_used with a realistic quantity.\n3. When asked to add random/sample entries, call get_all_reference_data, then create entries using real machine names (including the line in parenthesis), real engineer names, real line names, real spare parts from the DB, and realistic maintenance descriptions. ALWAYS include parts_used with quantity for every entry that involves physical work. Example: work_description="Replaced conveyor belt bearings", parts_used="Bearing Kit (Qty: 2)".\n4. To delete entries by date or criteria, use delete_entries_by_filter. Do NOT ask the user for IDs — the tool handles filtering internally.\n5. To edit an entry, call query_entries to find it, then call edit_entry with the ID and updated fields.\n6. Be proactive — use your tools immediately instead of asking the user for details you can look up.\n7. Be concise. After tool calls, summarize what you did (e.g. "Created 3 entries" or "Deleted 5 entries from today").';
 
   List<Map<String, dynamic>> get _toolDeclarations => [
     {
@@ -348,10 +336,7 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         final createdIds = <String>[];
         for (var e in entries) {
           final id =
-              'entry_' +
-              DateTime.now().millisecondsSinceEpoch.toString() +
-              '_' +
-              count.toString();
+              'entry_${DateTime.now().millisecondsSinceEpoch}_$count';
           final entry = {
             'id': id,
             'machine_id': e['machine_id'] ?? '',
@@ -384,8 +369,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
 
       case 'edit_entry':
         final id = args['id'] as String?;
-        if (id == null)
+        if (id == null) {
           return {'success': false, 'message': 'No entry ID provided'};
+        }
 
         final database = await db.database;
         final existing = await database.query(
@@ -393,24 +379,29 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
           where: 'id = ?',
           whereArgs: [id],
         );
-        if (existing.isEmpty)
+        if (existing.isEmpty) {
           return {'success': false, 'message': 'Entry not found'};
+        }
 
         final updates = Map<String, dynamic>.from(existing.first);
-        if (args['machine_id'] != null)
+        if (args['machine_id'] != null) {
           updates['machine_id'] = args['machine_id'];
+        }
         if (args['date'] != null) updates['date'] = args['date'];
         if (args['shift'] != null) updates['shift'] = args['shift'];
-        if (args['work_description'] != null)
+        if (args['work_description'] != null) {
           updates['work_description'] = args['work_description'];
-        if (args['total_time'] != null)
+        }
+        if (args['total_time'] != null) {
           updates['total_time'] = args['total_time'] is int
               ? args['total_time']
               : int.tryParse(args['total_time']?.toString() ?? '0') ?? 0;
+        }
         if (args['line_id'] != null) updates['line_id'] = args['line_id'];
         if (args['engineers'] != null) updates['engineers'] = args['engineers'];
-        if (args['parts_used'] != null)
+        if (args['parts_used'] != null) {
           updates['parts_used'] = args['parts_used'];
+        }
         if (args['notes'] != null) updates['notes'] = args['notes'];
         updates['updated_at'] = DateTime.now().toIso8601String();
         updates['sync_status'] = 'pending';

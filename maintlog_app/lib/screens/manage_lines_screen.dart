@@ -22,11 +22,12 @@ class _ManageLinesScreenState extends State<ManageLinesScreen> {
 
   Future<void> _load() async {
     final data = await LocalDatabase.instance.getLines();
-    if (mounted)
+    if (mounted) {
       setState(() {
         _lines = data;
         _isLoading = false;
       });
+    }
   }
 
   void _showDialog({Map<String, dynamic>? existing}) {
@@ -58,7 +59,7 @@ class _ManageLinesScreenState extends State<ManageLinesScreen> {
                 await LocalDatabase.instance.updateLine(existing['id'], name);
               } else {
                 await LocalDatabase.instance.insertLine({
-                  'id': 'l_' + DateTime.now().millisecondsSinceEpoch.toString(),
+                  'id': 'l_${DateTime.now().millisecondsSinceEpoch}',
                   'name': name,
                 });
               }

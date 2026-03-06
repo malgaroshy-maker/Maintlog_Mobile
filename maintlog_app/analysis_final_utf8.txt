@@ -1,0 +1,4 @@
+﻿Analyzing maintlog_app...                                       
+
+   info - 'value' is deprecated and shouldn't be used. Use component accessors like .r or .g, or toARGB32 for an explicit conversion - lib\providers\theme_provider.dart:44:41 - deprecated_member_use
+

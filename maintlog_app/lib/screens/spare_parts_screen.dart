@@ -105,8 +105,7 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
                 );
               } else {
                 await LocalDatabase.instance.insertSparePart({
-                  'id':
-                      'sp_' + DateTime.now().millisecondsSinceEpoch.toString(),
+                  'id': 'sp_${DateTime.now().millisecondsSinceEpoch}',
                   'name': name,
                   'part_number': partNum,
                   'stock': stock,
@@ -228,8 +227,8 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
                                   ),
                                   decoration: BoxDecoration(
                                     color: isOutOfStock
-                                        ? Colors.red.withOpacity(0.2)
-                                        : Colors.orange.withOpacity(0.2),
+                                        ? Colors.red.withValues(alpha: 0.2)
+                                        : Colors.orange.withValues(alpha: 0.2),
                                     borderRadius: BorderRadius.circular(4),
                                   ),
                                   child: Text(
@@ -247,7 +246,7 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
                             ],
                           ),
                           subtitle: Text(
-                            'Part #: ' + (part['part_number'] ?? ''),
+                            'Part #: ${part['part_number'] ?? ''}',
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -257,7 +256,7 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    'Stock: ' + stock.toString(),
+                                    'Stock: $stock',
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -316,6 +315,7 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
                                     await LocalDatabase.instance
                                         .deleteSparePart(part['id']);
                                     await SyncService().syncAll();
+                                    if (!context.mounted) return;
 
                                     if (mounted) {
                                       ScaffoldMessenger.of(

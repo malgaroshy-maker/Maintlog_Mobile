@@ -22,11 +22,12 @@ class _ManageEngineersScreenState extends State<ManageEngineersScreen> {
 
   Future<void> _load() async {
     final data = await LocalDatabase.instance.getEngineers();
-    if (mounted)
+    if (mounted) {
       setState(() {
         _engineers = data;
         _isLoading = false;
       });
+    }
   }
 
   void _showDialog({Map<String, dynamic>? existing}) {
@@ -88,8 +89,7 @@ class _ManageEngineersScreenState extends State<ManageEngineersScreen> {
                     } else {
                       await LocalDatabase.instance.insertEngineer({
                         'id':
-                            'eng_' +
-                            DateTime.now().millisecondsSinceEpoch.toString(),
+                            'eng_${DateTime.now().millisecondsSinceEpoch}',
                         'full_name': name,
                         'role': role,
                       });

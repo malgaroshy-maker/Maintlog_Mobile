@@ -53,9 +53,9 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading users: ' + e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading users: $e')));
       }
     }
   }
@@ -76,7 +76,7 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ' + e.toString())));
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -120,7 +120,7 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ' + e.toString())));
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -137,7 +137,7 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: ' + e.toString())));
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -226,7 +226,7 @@ class _UserApprovalScreenState extends State<UserApprovalScreen>
                 ),
               ),
               title: Text(user['name'] ?? 'Unknown'),
-              subtitle: Text('Role: ' + role + ' | Joined: ' + dateStr),
+              subtitle: Text('Role: $role | Joined: $dateStr'),
               trailing: isPending
                   ? Row(
                       mainAxisSize: MainAxisSize.min,

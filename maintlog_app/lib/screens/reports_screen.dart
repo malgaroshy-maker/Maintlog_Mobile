@@ -71,11 +71,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   }
 
   String _formatDate(DateTime d) {
-    return d.year.toString() +
-        '-' +
-        d.month.toString().padLeft(2, '0') +
-        '-' +
-        d.day.toString().padLeft(2, '0');
+    return '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
   }
 
   Future<List<Map<String, dynamic>>> _fetchFilteredEntries() async {
@@ -98,7 +94,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
     }
     if (_selectedEngineer != 'All Engineers') {
       where += ' AND engineers LIKE ?';
-      args.add('%' + _selectedEngineer + '%');
+      args.add('%$_selectedEngineer%');
     }
 
     return await db.query(
@@ -123,7 +119,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                'MaintLog Pro – ' + _selectedReportType,
+                'MaintLog Pro – $_selectedReportType',
                 style: pw.TextStyle(
                   fontSize: 18,
                   fontWeight: pw.FontWeight.bold,
@@ -131,14 +127,9 @@ class _ReportsScreenState extends State<ReportsScreen> {
               ),
               pw.SizedBox(height: 4),
               pw.Text(
-                'Period: ' +
-                    _formatDate(_dateRange!.start) +
-                    ' to ' +
-                    _formatDate(_dateRange!.end),
+                'Period: ${_formatDate(_dateRange!.start)} to ${_formatDate(_dateRange!.end)}',
               ),
-              pw.Text(
-                'Shift: ' + _selectedShift + ' | Machine: ' + _selectedMachine,
-              ),
+              pw.Text('Shift: $_selectedShift | Machine: $_selectedMachine'),
               pw.Divider(),
             ],
           ),
@@ -179,7 +170,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
             ),
             pw.SizedBox(height: 16),
             pw.Text(
-              'Total Entries: ' + entries.length.toString(),
+              'Total Entries: ${entries.length}',
               style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
             ),
           ],
@@ -187,14 +178,11 @@ class _ReportsScreenState extends State<ReportsScreen> {
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text(
-                'Generated: ' + DateTime.now().toString().substring(0, 19),
+                'Generated: ${DateTime.now().toString().substring(0, 19)}',
                 style: const pw.TextStyle(fontSize: 8),
               ),
               pw.Text(
-                'Page ' +
-                    context.pageNumber.toString() +
-                    ' of ' +
-                    context.pagesCount.toString(),
+                'Page ${context.pageNumber} of ${context.pagesCount}',
                 style: const pw.TextStyle(fontSize: 8),
               ),
             ],
@@ -207,7 +195,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('PDF Error: ' + e.toString())));
+        ).showSnackBar(SnackBar(content: Text('PDF Error: $e')));
       }
     }
     if (mounted) setState(() => _isExporting = false);
@@ -230,24 +218,12 @@ class _ReportsScreenState extends State<ReportsScreen> {
         final notes = (e['notes'] ?? '').toString().replaceAll(',', ';');
         final parts = (e['parts_used'] ?? '').toString().replaceAll(',', ';');
         buffer.writeln(
-          (e['date'] ?? '') +
-              ',' +
-              (e['shift'] ?? '') +
-              ',' +
-              (e['machine_id'] ?? '') +
-              ',' +
-              desc +
-              ',' +
-              (e['total_time'] ?? 0).toString() +
-              ',' +
-              parts +
-              ',' +
-              notes,
+          "${e['date'] ?? ''},${e['shift'] ?? ''},${e['machine_id'] ?? ''},$desc,${e['total_time'] ?? 0},$parts,$notes",
         );
       }
 
       final dir = await getTemporaryDirectory();
-      final file = File(dir.path + '/maintlog_report.csv');
+      final file = File('${dir.path}/maintlog_report.csv');
       await file.writeAsString(buffer.toString());
 
       await SharePlus.instance.share(
@@ -257,7 +233,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('CSV Error: ' + e.toString())));
+        ).showSnackBar(SnackBar(content: Text('CSV Error: $e')));
       }
     }
     if (mounted) setState(() => _isExporting = false);
@@ -301,7 +277,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       }
 
       final dir = await getTemporaryDirectory();
-      final filePath = dir.path + '/maintlog_report.xlsx';
+      final filePath = '${dir.path}/maintlog_report.xlsx';
       final fileBytes = excel.save();
       if (fileBytes != null) {
         final file = File(filePath);
@@ -314,7 +290,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Excel Error: ' + e.toString())));
+        ).showSnackBar(SnackBar(content: Text('Excel Error: $e')));
       }
     }
     if (mounted) setState(() => _isExporting = false);
@@ -323,7 +299,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
   @override
   Widget build(BuildContext context) {
     final dateLabel = _dateRange != null
-        ? _formatDate(_dateRange!.start) + ' → ' + _formatDate(_dateRange!.end)
+        ? '${_formatDate(_dateRange!.start)} → ${_formatDate(_dateRange!.end)}'
         : 'Select dates';
 
     final machineItems = ['All Machines'];
@@ -409,7 +385,7 @@ class _ReportsScreenState extends State<ReportsScreen> {
                 labelText: 'Filter by Engineer',
                 border: OutlineInputBorder(),
               ),
-              value: _selectedEngineer,
+              initialValue: _selectedEngineer,
               items: [
                 const DropdownMenuItem(
                   value: 'All Engineers',

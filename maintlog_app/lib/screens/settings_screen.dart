@@ -81,7 +81,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Row(
                   children: ThemeProvider.availableColors.map((color) {
                     final isSelected =
-                        themeProvider.seedColor.value == color.value;
+                        themeProvider.seedColor.toARGB32() == color.toARGB32();
                     return GestureDetector(
                       onTap: () => themeProvider.setThemeColor(color),
                       child: Container(
@@ -102,7 +102,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           boxShadow: [
                             if (isSelected)
                               BoxShadow(
-                                color: color.withOpacity(0.5),
+                                color: color.withValues(alpha: 0.5),
                                 blurRadius: 8,
                                 spreadRadius: 2,
                               ),
@@ -273,7 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _profileRow(
               Icons.fingerprint,
               'User ID',
-              uid.substring(0, 8) + '...',
+              '${uid.substring(0, 8)}...',
             ),
             const SizedBox(height: 12),
             _profileRow(
@@ -440,9 +440,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 }
               } catch (e) {
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: ' + e.toString())),
-                  );
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('Error: $e')));
                 }
               }
             },
@@ -642,7 +642,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     try {
       // Fetch available models from Gemini API
       final url = Uri.parse(
-        'https://generativelanguage.googleapis.com/v1beta/models?key=' + apiKey,
+        'https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey',
       );
       final client = HttpClient();
       final request = await client.getUrl(url);
@@ -697,7 +697,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (ctx.mounted) Navigator.pop(ctx);
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Model set to ' + m['name']!)),
+                        SnackBar(content: Text('Model set to ${m['name']!}')),
                       );
                     }
                   },
@@ -716,7 +716,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     subtitle: Text(
                       m['desc']!.length > 60
-                          ? m['desc']!.substring(0, 60) + '...'
+                          ? '${m['desc']!.substring(0, 60)}...'
                           : m['desc']!,
                       style: const TextStyle(fontSize: 11),
                     ),
@@ -729,9 +729,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       if (context.mounted) {
         Navigator.pop(context); // remove loading
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error fetching models: ' + e.toString())),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error fetching models: $e')));
       }
     }
   }

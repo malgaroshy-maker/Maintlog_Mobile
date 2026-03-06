@@ -129,7 +129,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.5),
+        color: Theme.of(
+          context,
+        ).colorScheme.primaryContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -232,7 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     if (_lowStockItems > 0)
                       Card(
                         margin: const EdgeInsets.only(bottom: 16),
-                        color: Colors.orange.withOpacity(0.1),
+                        color: Colors.orange.withValues(alpha: 0.1),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: const BorderSide(color: Colors.orange),
@@ -278,9 +280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        (p['name'] ?? 'Unknown') +
-                                            ' — Stock: ' +
-                                            stock.toString(),
+                                        "${p['name'] ?? 'Unknown'} — Stock: $stock",
                                         style: TextStyle(
                                           color: isOut
                                               ? Colors.red
@@ -338,7 +338,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: _buildCard(
             context,
             'Total Downtime',
-            _totalDowntime.toString() + ' min',
+            '$_totalDowntime min',
             Icons.timer,
           ),
         ),
@@ -478,11 +478,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return PieChartSectionData(
             color: colors[i % colors.length],
             value: count.toDouble(),
-            title:
-                shifts[i].replaceAll(' Shift', '') +
-                '\n' +
-                pct.toString() +
-                '%',
+            title: '${shifts[i].replaceAll(' Shift', '')}\n$pct%',
             radius: 50,
             titleStyle: const TextStyle(
               fontSize: 12,
@@ -577,7 +573,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     SizedBox(
                       width: 50,
                       child: Text(
-                        machine.value.toString() + 'm',
+                        '${machine.value}m',
                         textAlign: TextAlign.end,
                         style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                       ),

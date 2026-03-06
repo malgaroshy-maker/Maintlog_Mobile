@@ -201,7 +201,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
         if (sp.partData != null) {
           final int qty = int.tryParse(sp.qtyController.text) ?? 1;
           partsUsedList.add(
-            sp.partData!['name'].toString() + ' (Qty: ' + qty.toString() + ')',
+            '${sp.partData!['name']} (Qty: $qty)',
           );
         }
       }
@@ -326,7 +326,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
                       ),
                     ),
                     isExpanded: true,
-                    value: sp.partId,
+                    initialValue: sp.partId,
                     hint: const Text('Select part'),
                     items: _availableParts.map((p) {
                       final isLow = (p['stock'] as int) < 3;
@@ -334,10 +334,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
                       return DropdownMenuItem<String>(
                         value: p['id'] as String,
                         child: Text(
-                          p['name'].toString() +
-                              " (Stock: " +
-                              p['stock'].toString() +
-                              ")",
+                          "${p['name']} (Stock: ${p['stock']})",
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: isOut
@@ -420,8 +417,8 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
             children: [
               Text(
                 widget.initialEntry == null || widget.isDuplicate
-                    ? 'New Log Entry (Duplicate) - ' + widget.activeShift
-                    : 'Edit Log Entry - ' + widget.initialEntry!.shift,
+                    ? 'New Log Entry (Duplicate) - ${widget.activeShift}'
+                    : 'Edit Log Entry - ${widget.initialEntry!.shift}',
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               const SizedBox(height: 16),
@@ -462,7 +459,7 @@ class _NewLogEntryDialogState extends State<NewLogEntryDialog> {
                         labelText: 'Machine',
                         border: OutlineInputBorder(),
                       ),
-                      value: _selectedMachine,
+                      initialValue: _selectedMachine,
                       hint: const Text('Select Lines first'),
                       items: _computedMachineNames
                           .map(
