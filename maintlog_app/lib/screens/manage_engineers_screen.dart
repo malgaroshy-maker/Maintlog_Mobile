@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../database/local_database.dart';
+import '../services/sync_service.dart';
 
 class ManageEngineersScreen extends StatefulWidget {
   const ManageEngineersScreen({super.key});
@@ -93,6 +95,7 @@ class _ManageEngineersScreenState extends State<ManageEngineersScreen> {
                       });
                     }
                     if (ctx.mounted) Navigator.pop(ctx);
+                    await SyncService().syncAll();
                     _load();
                   },
                   child: Text(isEdit ? 'Save' : 'Add'),
@@ -157,8 +160,41 @@ class _ManageEngineersScreenState extends State<ManageEngineersScreen> {
                           color: Colors.redAccent,
                         ),
                         onPressed: () async {
-                          await LocalDatabase.instance.deleteEngineer(e['id']);
-                          _load();
+                          bool? confirm = await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: const Text('Delete Engineer'),
+                              content: Text(
+                                'Are you sure you want to delete ${e['full_name']}?',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                FilledButton(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.red,
+                                  ),
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (confirm == true) {
+                            try {
+                              await Supabase.instance.client
+                                  .from('engineers')
+                                  .delete()
+                                  .eq('id', e['id']);
+                            } catch (_) {}
+                            await LocalDatabase.instance.deleteEngineer(
+                              e['id'],
+                            );
+                            await SyncService().syncAll();
+                            _load();
+                          }
                         },
                       ),
                     ],

@@ -292,9 +292,11 @@ class LocalDatabase {
 
   Future<void> insertSparePart(Map<String, dynamic> part) async {
     final db = await instance.database;
+    final data = Map<String, dynamic>.from(part);
+    data['sync_status'] = 'pending';
     await db.insert(
       'spare_parts',
-      part,
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -333,9 +335,11 @@ class LocalDatabase {
 
   Future<void> insertMachine(Map<String, dynamic> machine) async {
     final db = await instance.database;
+    final data = Map<String, dynamic>.from(machine);
+    data['sync_status'] = 'pending';
     await db.insert(
       'machines',
-      machine,
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -344,7 +348,7 @@ class LocalDatabase {
     final db = await instance.database;
     await db.update(
       'machines',
-      {'name': name},
+      {'name': name, 'sync_status': 'pending'},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -364,9 +368,11 @@ class LocalDatabase {
 
   Future<void> insertEngineer(Map<String, dynamic> engineer) async {
     final db = await instance.database;
+    final data = Map<String, dynamic>.from(engineer);
+    data['sync_status'] = 'pending';
     await db.insert(
       'engineers',
-      engineer,
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -375,7 +381,7 @@ class LocalDatabase {
     final db = await instance.database;
     await db.update(
       'engineers',
-      {'full_name': name, 'role': role},
+      {'full_name': name, 'role': role, 'sync_status': 'pending'},
       where: 'id = ?',
       whereArgs: [id],
     );
@@ -395,9 +401,11 @@ class LocalDatabase {
 
   Future<void> insertLine(Map<String, dynamic> line) async {
     final db = await instance.database;
+    final data = Map<String, dynamic>.from(line);
+    data['sync_status'] = 'pending';
     await db.insert(
       'line_numbers',
-      line,
+      data,
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -406,7 +414,7 @@ class LocalDatabase {
     final db = await instance.database;
     await db.update(
       'line_numbers',
-      {'name': name},
+      {'name': name, 'sync_status': 'pending'},
       where: 'id = ?',
       whereArgs: [id],
     );

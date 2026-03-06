@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../database/local_database.dart';
 import '../services/sync_service.dart';
 
@@ -306,6 +307,12 @@ class _SparePartsScreenState extends State<SparePartsScreen> {
                                   );
 
                                   if (confirm == true) {
+                                    try {
+                                      await Supabase.instance.client
+                                          .from('spare_parts')
+                                          .delete()
+                                          .eq('id', part['id']);
+                                    } catch (_) {}
                                     await LocalDatabase.instance
                                         .deleteSparePart(part['id']);
                                     await SyncService().syncAll();
