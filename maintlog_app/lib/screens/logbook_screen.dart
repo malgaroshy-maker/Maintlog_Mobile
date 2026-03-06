@@ -24,6 +24,7 @@ class _LogbookScreenState extends State<LogbookScreen> {
 
   List<LogEntry> _entries = [];
   String _activeCrew = 'No crew assigned';
+  bool _hasPendingSync = false;
   bool _isLoading = true;
 
   @override
@@ -59,14 +60,17 @@ class _LogbookScreenState extends State<LogbookScreen> {
     final results = await Future.wait([
       LocalDatabase.instance.getEntries(_dateString, _activeShift),
       LocalDatabase.instance.getShiftEngineers(_dateString, _activeShift),
+      SyncService().hasPendingSyncs(),
     ]);
 
     final entryMaps = results[0] as List<Map<String, dynamic>>;
     final shiftCrew = results[1] as Map<String, dynamic>?;
+    final hasPendingSync = results[2] as bool;
 
     setState(() {
       _entries = entryMaps.map((e) => LogEntry.fromMap(e)).toList();
       _activeCrew = shiftCrew?['engineer_names'] ?? 'No crew assigned';
+      _hasPendingSync = hasPendingSync;
       _isLoading = false;
     });
   }
@@ -89,12 +93,18 @@ class _LogbookScreenState extends State<LogbookScreen> {
                     height: 20,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Icon(Icons.sync),
-            onPressed: () async {
-              setState(() => _isLoading = true);
-              await SyncService().syncAll();
-              await _loadEntries();
-            },
+                : Icon(
+                    _hasPendingSync ? Icons.cloud_upload : Icons.cloud_done,
+                    color: _hasPendingSync ? Colors.orange : Colors.green,
+                  ),
+            tooltip: _hasPendingSync ? 'Pending Syncs' : 'All Synced',
+            onPressed: _hasPendingSync
+                ? () async {
+                    setState(() => _isLoading = true);
+                    await SyncService().syncAll();
+                    await _loadEntries();
+                  }
+                : null,
           ),
           IconButton(icon: const Icon(Icons.add), onPressed: _addNewRow),
         ],
