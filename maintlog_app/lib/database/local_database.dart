@@ -19,7 +19,7 @@ class LocalDatabase {
 
     return await openDatabase(
       path,
-      version: 10,
+      version: 11,
       onCreate: _createDB,
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 6) {
@@ -59,6 +59,18 @@ class LocalDatabase {
         if (oldVersion < 10) {
           try {
             await db.execute('ALTER TABLE machines ADD COLUMN line_id TEXT');
+          } catch (_) {}
+        }
+        if (oldVersion < 11) {
+          try {
+            await db.execute('''
+            CREATE TABLE deleted_records (
+              id TEXT,
+              table_name TEXT NOT NULL,
+              deleted_at TEXT NOT NULL,
+              PRIMARY KEY (id, table_name)
+            )
+            ''');
           } catch (_) {}
         }
       },
@@ -144,6 +156,15 @@ class LocalDatabase {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       sync_status TEXT DEFAULT 'synced'
+    )
+    ''');
+
+    await db.execute('''
+    CREATE TABLE deleted_records (
+      id TEXT,
+      table_name TEXT NOT NULL,
+      deleted_at TEXT NOT NULL,
+      PRIMARY KEY (id, table_name)
     )
     ''');
 
@@ -241,6 +262,12 @@ class LocalDatabase {
       await _adjustStock(oldEntry['parts_used'] as String?, true);
     }
 
+    await db.insert('deleted_records', {
+      'id': id,
+      'table_name': 'log_entries',
+      'deleted_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
     await db.delete('log_entries', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -329,6 +356,12 @@ class LocalDatabase {
 
   Future<void> deleteSparePart(String id) async {
     final db = await instance.database;
+    await db.insert('deleted_records', {
+      'id': id,
+      'table_name': 'spare_parts',
+      'deleted_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
     await db.delete('spare_parts', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -362,6 +395,12 @@ class LocalDatabase {
 
   Future<void> deleteMachine(String id) async {
     final db = await instance.database;
+    await db.insert('deleted_records', {
+      'id': id,
+      'table_name': 'machines',
+      'deleted_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
     await db.delete('machines', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -395,6 +434,12 @@ class LocalDatabase {
 
   Future<void> deleteEngineer(String id) async {
     final db = await instance.database;
+    await db.insert('deleted_records', {
+      'id': id,
+      'table_name': 'engineers',
+      'deleted_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
     await db.delete('engineers', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -428,6 +473,12 @@ class LocalDatabase {
 
   Future<void> deleteLine(String id) async {
     final db = await instance.database;
+    await db.insert('deleted_records', {
+      'id': id,
+      'table_name': 'line_numbers',
+      'deleted_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
     await db.delete('line_numbers', where: 'id = ?', whereArgs: [id]);
   }
 
@@ -498,6 +549,12 @@ class LocalDatabase {
 
   Future<void> deleteTask(String id) async {
     final db = await instance.database;
+    await db.insert('deleted_records', {
+      'id': id,
+      'table_name': 'todo_tasks',
+      'deleted_at': DateTime.now().toIso8601String(),
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+
     await db.delete('todo_tasks', where: 'id = ?', whereArgs: [id]);
   }
 

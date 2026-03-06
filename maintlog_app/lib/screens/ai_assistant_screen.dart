@@ -76,9 +76,9 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
       '. '
           'The available shifts are: Morning Shift, Evening Shift, Night Shift.\n\n'
           'CRITICAL RULES:\n'
-          '1. ALWAYS call get_all_reference_data FIRST before creating or editing entries. This gives you all valid machines, engineers, lines, and spare parts (with stock levels) in one call.\n'
-          '2. When creating entries, you MUST fill ALL fields: machine_id (from DB), date, shift, work_description, total_time (realistic minutes like 15-120), line_id (from DB), engineers (comma-separated names from DB), parts_used (format: "PartName (Qty: N)"), and notes. Every entry MUST have a line, engineers, and spare parts assigned. If the work description involves replacing or using parts (bearings, seals, belts, filters, etc.), you MUST include the matching spare part from the database in parts_used with a realistic quantity.\n'
-          '3. When asked to add random/sample entries, call get_all_reference_data, then create entries using real machine names, real engineer names, real line names, real spare parts from the DB, and realistic maintenance descriptions. ALWAYS include parts_used with quantity for every entry that involves physical work. Example: work_description="Replaced conveyor belt bearings", parts_used="Bearing Kit (Qty: 2)".\n'
+          '1. ALWAYS call get_all_reference_data FIRST before creating or editing entries. This gives you all valid machines (already formatted with their Line), engineers, lines, and spare parts (with stock levels) in one call.\n'
+          '2. When creating entries, you MUST fill ALL fields: machine_id (from DB, MUST perfectly match the "Machine Name (Line Name)" format provided by get_all_reference_data), date, shift, work_description, total_time (realistic minutes like 15-120), line_id (from DB), engineers (comma-separated names from DB), parts_used (format: "PartName (Qty: N)"), and notes. Every entry MUST have a line, engineers, and spare parts assigned. If the work description involves replacing or using parts (bearings, seals, belts, filters, etc.), you MUST include the matching spare part from the database in parts_used with a realistic quantity.\n'
+          '3. When asked to add random/sample entries, call get_all_reference_data, then create entries using real machine names (including the line in parenthesis), real engineer names, real line names, real spare parts from the DB, and realistic maintenance descriptions. ALWAYS include parts_used with quantity for every entry that involves physical work. Example: work_description="Replaced conveyor belt bearings", parts_used="Bearing Kit (Qty: 2)".\n'
           '4. To delete entries by date or criteria, use delete_entries_by_filter. Do NOT ask the user for IDs — the tool handles filtering internally.\n'
           '5. To edit an entry, call query_entries to find it, then call edit_entry with the ID and updated fields.\n'
           '6. Be proactive — use your tools immediately instead of asking the user for details you can look up.\n'
@@ -136,7 +136,8 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
                   'properties': {
                     'machine_id': {
                       'type': 'STRING',
-                      'description': 'Machine name (must exist in database)',
+                      'description':
+                          'Machine name strictly from get_all_reference_data (e.g. "CFA (Line 1)")',
                     },
                     'date': {
                       'type': 'STRING',
@@ -281,8 +282,21 @@ class _AiAssistantScreenState extends State<AiAssistantScreen> {
         final engineers = await database.query('engineers');
         final lines = await database.query('line_numbers');
         final parts = await database.query('spare_parts');
+
+        // Format machines explicitly tied to their lines
+        final formattedMachines = <String>[];
+        for (var m in machines) {
+          final lineId = m['line_id']?.toString();
+          String lineName = 'Unassigned';
+          if (lineId != null) {
+            final line = lines.where((l) => l['id'] == lineId).firstOrNull;
+            if (line != null) lineName = line['name'].toString();
+          }
+          formattedMachines.add('${m['name']} ($lineName)');
+        }
+
         return {
-          'machines': machines.map((m) => m['name']).toList(),
+          'machines': formattedMachines,
           'engineers': engineers.map((e) => e['full_name']).toList(),
           'lines': lines.map((l) => l['name']).toList(),
           'spare_parts': parts

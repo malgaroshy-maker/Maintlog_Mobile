@@ -23,6 +23,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now();
   bool _hasPendingSync = false;
+  List<Map<String, dynamic>> _lines = [];
+  String? _selectedLineId;
 
   @override
   void initState() {
@@ -62,6 +64,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final pendingTasks = await db.getPendingTaskCount();
     final lowParts = await db.getLowStockParts(5);
     final hasPendingSync = await SyncService().hasPendingSyncs();
+    final linesData = await db.getLines();
 
     // Compute total downtime and machine breakdown
     int totalDown = 0;
@@ -73,6 +76,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     };
 
     for (var entry in dateRangeEntries) {
+      if (_selectedLineId != null && entry['line_id'] != _selectedLineId) {
+        continue;
+      }
+
       final time = entry['total_time'] as int? ?? 0;
       totalDown += time;
 
@@ -94,6 +101,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _lowStockItems = lowParts.length;
         _lowStockParts = lowParts;
         _hasPendingSync = hasPendingSync;
+        _lines = linesData;
+
+        // Ensure selected line is still valid
+        if (_selectedLineId != null &&
+            !_lines.any((l) => l['id'] == _selectedLineId)) {
+          _selectedLineId = null;
+        }
+
         _isLoading = false;
       });
     }
@@ -138,6 +153,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Widget _buildLineFilter() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).dividerColor),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String?>(
+          isExpanded: true,
+          value: _selectedLineId,
+          hint: const Text('All Production Lines'),
+          items: [
+            const DropdownMenuItem<String?>(
+              value: null,
+              child: Text(
+                'All Production Lines',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+            ..._lines.map((line) {
+              return DropdownMenuItem<String?>(
+                value: line['id'] as String,
+                child: Text(line['name'] as String),
+              );
+            }),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedLineId = value;
+              _isLoading = true;
+            });
+            _loadDashboardData();
+          },
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -172,6 +228,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildDateRangeBanner(),
+                    _buildLineFilter(),
                     if (_lowStockItems > 0)
                       Card(
                         margin: const EdgeInsets.only(bottom: 16),

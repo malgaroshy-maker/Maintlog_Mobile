@@ -19,6 +19,26 @@ class SyncService {
   Stream<void> get onSyncEvent => _syncController.stream;
 
   Future<void> syncAll() async {
+    // 0. Push any locally recorded deletions to Supabase
+    final db = await _localDb.database;
+    final deletedRecords = await db.query('deleted_records');
+
+    for (var record in deletedRecords) {
+      try {
+        final String tableName = record['table_name'] as String;
+        final String id = record['id'] as String;
+        await _supabase.from(tableName).delete().eq('id', id);
+        await db.delete(
+          'deleted_records',
+          where: 'id = ? AND table_name = ?',
+          whereArgs: [id, tableName],
+        );
+        debugPrint('Pushed deletion to Supabase: $tableName $id');
+      } catch (e) {
+        debugPrint('Error pushing deletion to Supabase: $e');
+      }
+    }
+
     await _syncTable('log_entries', [
       'id',
       'section_id',
@@ -141,6 +161,24 @@ class SyncService {
     // 2. Pull remote entries into local DB
     try {
       final remoteEntries = await _supabase.from(tableName).select();
+      final Set<String> remoteIds = remoteEntries
+          .map((e) => e['id'].toString())
+          .toSet();
+
+      // Prune local records that were deleted on the cloud.
+      // We only prune if it's currently "synced" locally (meaning it's not a brand new offline creation).
+      final localSyncedEntries = await db.query(
+        tableName,
+        where: 'sync_status = ?',
+        whereArgs: ['synced'],
+      );
+      for (var local in localSyncedEntries) {
+        final localId = local['id'] as String;
+        if (!remoteIds.contains(localId)) {
+          await db.delete(tableName, where: 'id = ?', whereArgs: [localId]);
+          debugPrint('Down-synced deletion for $tableName: $localId');
+        }
+      }
 
       for (var remote in remoteEntries) {
         final localPayload = <String, dynamic>{};
@@ -264,6 +302,24 @@ class SyncService {
       if (columns == null) return;
 
       final remoteEntries = await _supabase.from(table).select();
+      final Set<String> remoteIds = remoteEntries
+          .map((e) => e['id'].toString())
+          .toSet();
+
+      // Prune local records that were deleted on the cloud.
+      final localSyncedEntries = await db.query(
+        table,
+        where: 'sync_status = ?',
+        whereArgs: ['synced'],
+      );
+      for (var local in localSyncedEntries) {
+        final localId = local['id'] as String;
+        if (!remoteIds.contains(localId)) {
+          await db.delete(table, where: 'id = ?', whereArgs: [localId]);
+          debugPrint('Realtime down-synced deletion for $table: $localId');
+        }
+      }
+
       for (var remote in remoteEntries) {
         final localPayload = <String, dynamic>{};
         for (var key in columns) {
